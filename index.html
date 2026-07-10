@@ -1,0 +1,1600 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Black Hole — упрощённая версия</title>
+
+    <!-- FIREBASE SDK -->
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js">
+    </script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js">
+    </script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js">
+    </script>
+
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: 'Segoe UI', system-ui, sans-serif;
+            background: radial-gradient(ellipse at 20% 50%, #1a0a2e, #0a0a0f 70%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            padding: 20px;
+        }
+        .glass-container {
+            max-width: 720px;
+            width: 100%;
+            padding: 30px 25px;
+            border-radius: 32px;
+            background: rgba(255, 255, 255, 0.04);
+            backdrop-filter: blur(24px) saturate(180%);
+            -webkit-backdrop-filter: blur(24px) saturate(180%);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            box-shadow: 0 30px 60px rgba(0, 0, 0, 0.6);
+            position: relative;
+            overflow: hidden;
+        }
+        .glass-container::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(ellipse at 30% 20%, rgba(255, 255, 255, 0.04), transparent 60%);
+            pointer-events: none;
+        }
+        .logo {
+            font-size: 2.2em;
+            font-weight: 900;
+            color: #f0b800;
+            text-align: center;
+            letter-spacing: 2px;
+            text-shadow: 0 0 40px rgba(240, 184, 0, 0.15);
+            position: relative;
+            z-index: 1;
+        }
+        .subtitle {
+            text-align: center;
+            color: rgba(255, 255, 255, 0.5);
+            font-size: 0.95em;
+            margin-top: 4px;
+            margin-bottom: 20px;
+            position: relative;
+            z-index: 1;
+        }
+        .tabs {
+            display: flex;
+            gap: 6px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+            position: relative;
+            z-index: 1;
+        }
+        .tab-btn {
+            flex: 1;
+            padding: 10px 8px;
+            border: none;
+            border-radius: 16px;
+            font-weight: 700;
+            font-size: 0.8em;
+            cursor: pointer;
+            transition: 0.2s;
+            background: rgba(255, 255, 255, 0.04);
+            backdrop-filter: blur(8px);
+            border: 1px solid rgba(255, 255, 255, 0.06);
+            color: rgba(255, 255, 255, 0.5);
+            min-width: 60px;
+        }
+        .tab-btn:hover {
+            background: rgba(255, 255, 255, 0.08);
+            color: #fff;
+        }
+        .tab-btn.active {
+            background: rgba(240, 184, 0, 0.15);
+            border-color: rgba(240, 184, 0, 0.3);
+            color: #f0b800;
+        }
+        .tab-content {
+            display: none;
+            position: relative;
+            z-index: 1;
+        }
+        .tab-content.active {
+            display: block;
+        }
+        .glass-input {
+            width: 100%;
+            padding: 12px 14px;
+            margin: 6px 0 12px 0;
+            border: none;
+            border-radius: 16px;
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(8px);
+            border: 1px solid rgba(255, 255, 255, 0.06);
+            color: #fff;
+            font-size: 1em;
+            transition: 0.2s;
+            outline: none;
+            position: relative;
+            z-index: 1;
+        }
+        .glass-input:focus {
+            background: rgba(255, 255, 255, 0.08);
+            border-color: rgba(240, 184, 0, 0.3);
+        }
+        .glass-input::placeholder {
+            color: rgba(255, 255, 255, 0.25);
+        }
+        select.glass-input {
+            appearance: none;
+            cursor: pointer;
+        }
+        select.glass-input option {
+            background: #1a1a2e;
+            color: #fff;
+        }
+        textarea.glass-input {
+            resize: vertical;
+            min-height: 70px;
+            font-family: inherit;
+        }
+        .glass-btn {
+            width: 100%;
+            padding: 12px;
+            margin: 5px 0;
+            border: none;
+            border-radius: 16px;
+            font-weight: 700;
+            font-size: 1em;
+            cursor: pointer;
+            transition: 0.2s;
+            position: relative;
+            z-index: 1;
+        }
+        .btn-gold {
+            background: linear-gradient(145deg, #f0b800, #d4a400);
+            color: #0a0a0f;
+            box-shadow: 0 8px 24px rgba(240, 184, 0, 0.2);
+        }
+        .btn-gold:hover {
+            transform: scale(1.01);
+            box-shadow: 0 12px 32px rgba(240, 184, 0, 0.35);
+        }
+        .btn-ghost {
+            background: rgba(255, 255, 255, 0.05);
+            color: rgba(255, 255, 255, 0.7);
+            border: 1px solid rgba(255, 255, 255, 0.06);
+        }
+        .btn-ghost:hover {
+            background: rgba(255, 255, 255, 0.08);
+            color: #fff;
+        }
+        .btn-danger {
+            background: rgba(255, 50, 50, 0.12);
+            color: #ff6666;
+            border: 1px solid rgba(255, 50, 50, 0.15);
+        }
+        .btn-danger:hover {
+            background: rgba(255, 50, 50, 0.2);
+        }
+        .btn-small {
+            padding: 6px 12px;
+            font-size: 0.8em;
+            width: auto;
+            display: inline-block;
+            margin: 2px;
+            border-radius: 12px;
+            border: none;
+            font-weight: 700;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+        .btn-edit {
+            background: rgba(100, 180, 255, 0.15);
+            color: #66ccff;
+            border: 1px solid rgba(100, 180, 255, 0.1);
+        }
+        .btn-edit:hover {
+            background: rgba(100, 180, 255, 0.25);
+        }
+        .btn-delete {
+            background: rgba(255, 50, 50, 0.12);
+            color: #ff6666;
+            border: 1px solid rgba(255, 50, 50, 0.1);
+        }
+        .btn-delete:hover {
+            background: rgba(255, 50, 50, 0.25);
+        }
+        .btn-fav {
+            background: rgba(240, 184, 0, 0.1);
+            color: #f0b800;
+            border: 1px solid rgba(240, 184, 0, 0.1);
+        }
+        .btn-fav.active {
+            background: rgba(240, 184, 0, 0.25);
+        }
+        .btn-chat {
+            background: rgba(0, 200, 150, 0.1);
+            color: #66ddbb;
+            border: 1px solid rgba(0, 200, 150, 0.1);
+        }
+        .btn-chat:hover {
+            background: rgba(0, 200, 150, 0.2);
+        }
+        .btn-back {
+            background: rgba(255, 255, 255, 0.05);
+            color: rgba(255, 255, 255, 0.6);
+            border: 1px solid rgba(255, 255, 255, 0.06);
+            padding: 8px 16px;
+            border-radius: 12px;
+            font-size: 0.85em;
+            cursor: pointer;
+            transition: 0.2s;
+            margin-bottom: 12px;
+            display: inline-block;
+        }
+        .btn-back:hover {
+            background: rgba(255, 255, 255, 0.1);
+            color: #fff;
+        }
+        .glass-card {
+            background: rgba(255, 255, 255, 0.04);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.06);
+            border-radius: 20px;
+            padding: 16px 18px;
+            margin: 10px 0;
+            transition: 0.2s;
+            position: relative;
+            z-index: 1;
+        }
+        .glass-card:hover {
+            background: rgba(255, 255, 255, 0.07);
+        }
+        .card-title {
+            color: #f0b800;
+            font-weight: 700;
+            font-size: 1.1em;
+        }
+        .card-tags {
+            color: rgba(255, 255, 255, 0.35);
+            font-size: 0.8em;
+        }
+        .card-desc {
+            color: rgba(255, 255, 255, 0.7);
+            font-size: 0.95em;
+            line-height: 1.5;
+        }
+        .card-contacts {
+            color: rgba(255, 255, 255, 0.3);
+            font-size: 0.85em;
+        }
+        .card-img {
+            max-width: 100%;
+            max-height: 120px;
+            border-radius: 12px;
+            margin: 6px 0;
+            object-fit: cover;
+            background: rgba(255, 255, 255, 0.05);
+        }
+        .card-actions {
+            margin-top: 8px;
+            display: flex;
+            gap: 6px;
+            flex-wrap: wrap;
+        }
+        .divider {
+            margin: 16px 0;
+            border: none;
+            height: 1px;
+            background: linear-gradient(to right, transparent, rgba(255, 255, 255, 0.06), transparent);
+        }
+        .message {
+            text-align: center;
+            margin: 8px 0;
+            font-size: 0.95em;
+        }
+        .message.success {
+            color: #66cc88;
+        }
+        .message.error {
+            color: #ff6666;
+        }
+        .hidden {
+            display: none !important;
+        }
+        .user-greeting {
+            color: rgba(255, 255, 255, 0.8);
+            font-size: 1.05em;
+        }
+        .user-greeting span {
+            color: #f0b800;
+            font-weight: 700;
+        }
+        .footer-note {
+            margin-top: 20px;
+            text-align: center;
+            color: rgba(255, 255, 255, 0.12);
+            font-size: 0.75em;
+            letter-spacing: 1px;
+        }
+        .filter-row {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            margin-bottom: 12px;
+        }
+        .filter-row select,
+        .filter-row input {
+            width: 100%;
+            padding: 10px 14px;
+            border: none;
+            border-radius: 14px;
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(8px);
+            border: 1px solid rgba(255, 255, 255, 0.06);
+            color: #fff;
+            font-size: 0.95em;
+            outline: none;
+        }
+        .filter-row select option {
+            background: #1a1a2e;
+            color: #fff;
+        }
+        .type-badge {
+            display: inline-block;
+            padding: 2px 12px;
+            border-radius: 20px;
+            font-size: 0.7em;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 4px;
+        }
+        .badge-team {
+            background: rgba(240, 184, 0, 0.2);
+            color: #f0b800;
+            border: 1px solid rgba(240, 184, 0, 0.15);
+        }
+        .badge-work {
+            background: rgba(0, 180, 255, 0.15);
+            color: #66ccff;
+            border: 1px solid rgba(0, 180, 255, 0.1);
+        }
+        .profile-avatar {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.8em;
+            font-weight: 700;
+            color: #fff;
+            margin-bottom: 12px;
+        }
+        .profile-field {
+            color: rgba(255, 255, 255, 0.5);
+            font-size: 0.8em;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-top: 6px;
+        }
+        .profile-value {
+            color: #fff;
+            font-size: 1em;
+        }
+        .clickable-author {
+            color: rgba(255, 255, 255, 0.5);
+            cursor: pointer;
+            transition: 0.2s;
+            padding: 2px 8px;
+            border-radius: 8px;
+            display: inline-block;
+        }
+        .clickable-author:hover {
+            color: #f0b800;
+            background: rgba(240, 184, 0, 0.1);
+        }
+        .chat-messages {
+            max-height: 250px;
+            overflow-y: auto;
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 16px;
+            padding: 12px;
+            margin-bottom: 10px;
+        }
+        .chat-messages .msg {
+            padding: 6px 10px;
+            margin: 4px 0;
+            border-radius: 12px;
+            background: rgba(255, 255, 255, 0.05);
+            font-size: 0.9em;
+        }
+        .chat-messages .msg .sender {
+            color: #f0b800;
+            font-weight: 600;
+        }
+        .chat-messages .msg .time {
+            color: rgba(255, 255, 255, 0.2);
+            font-size: 0.7em;
+            margin-left: 8px;
+        }
+        .chat-input-row {
+            display: flex;
+            gap: 8px;
+        }
+        .chat-input-row input {
+            flex: 1;
+            padding: 10px 14px;
+            border: none;
+            border-radius: 14px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.06);
+            color: #fff;
+            outline: none;
+        }
+        .chat-input-row button {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 14px;
+            background: #f0b800;
+            color: #0a0a0f;
+            font-weight: 700;
+            cursor: pointer;
+        }
+        .edit-form {
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 16px;
+            padding: 12px;
+            margin: 8px 0;
+        }
+        .search-row {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 10px;
+        }
+        .search-row input {
+            flex: 1;
+            padding: 10px 14px;
+            border: none;
+            border-radius: 14px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.06);
+            color: #fff;
+            outline: none;
+        }
+        .file-input-wrapper {
+            position: relative;
+            display: inline-block;
+            width: 100%;
+            margin: 6px 0 10px 0;
+        }
+        .file-input-wrapper input[type="file"] {
+            position: absolute;
+            opacity: 0;
+            width: 100%;
+            height: 100%;
+            cursor: pointer;
+        }
+        .file-input-wrapper .file-label {
+            display: block;
+            padding: 12px;
+            border-radius: 16px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px dashed rgba(255, 255, 255, 0.15);
+            color: rgba(255, 255, 255, 0.4);
+            text-align: center;
+            font-size: 0.9em;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+        .file-input-wrapper .file-label:hover {
+            background: rgba(255, 255, 255, 0.08);
+            border-color: rgba(240, 184, 0, 0.3);
+            color: #fff;
+        }
+        .file-input-wrapper .file-label.has-file {
+            border-color: #f0b800;
+            color: #f0b800;
+            background: rgba(240, 184, 0, 0.05);
+        }
+        .preview-img {
+            max-width: 100%;
+            max-height: 100px;
+            border-radius: 12px;
+            margin: 6px 0;
+        }
+        .comments {
+            margin-top: 10px;
+            border-top: 1px solid rgba(255, 255, 255, 0.06);
+            padding-top: 10px;
+        }
+        .comments .comment {
+            padding: 6px 0;
+            font-size: 0.9em;
+            color: rgba(255, 255, 255, 0.7);
+        }
+        .comments .comment .c-author {
+            color: #f0b800;
+            font-weight: 600;
+        }
+        .comments .comment .c-time {
+            color: rgba(255, 255, 255, 0.2);
+            font-size: 0.7em;
+        }
+        .comments .comment-input-row {
+            display: flex;
+            gap: 6px;
+            margin-top: 6px;
+        }
+        .comments .comment-input-row input {
+            flex: 1;
+            padding: 8px 12px;
+            border: none;
+            border-radius: 12px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.06);
+            color: #fff;
+            outline: none;
+            font-size: 0.9em;
+        }
+        .comments .comment-input-row button {
+            padding: 8px 16px;
+            border: none;
+            border-radius: 12px;
+            background: #f0b800;
+            color: #0a0a0f;
+            font-weight: 700;
+            cursor: pointer;
+            font-size: 0.8em;
+        }
+        .notification {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background: rgba(20, 20, 40, 0.95);
+            backdrop-filter: blur(16px);
+            color: #fff;
+            padding: 12px 20px;
+            border-radius: 16px;
+            border: 1px solid rgba(240, 184, 0, 0.2);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+            z-index: 999;
+            animation: slideIn 0.3s ease;
+            max-width: 300px;
+        }
+        .notification .notif-title {
+            color: #f0b800;
+            font-weight: 700;
+            font-size: 0.9em;
+        }
+        .notification .notif-text {
+            color: rgba(255, 255, 255, 0.7);
+            font-size: 0.85em;
+        }
+        @keyframes slideIn {
+            from {
+                transform: translateX(100px);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+        .views {
+            color: rgba(255, 255, 255, 0.2);
+            font-size: 0.7em;
+        }
+        @media (max-width: 480px) {
+            .glass-container {
+                padding: 16px 12px;
+            }
+            .logo {
+                font-size: 1.8em;
+            }
+            .tab-btn {
+                font-size: 0.7em;
+                padding: 8px 4px;
+                min-width: 40px;
+            }
+            .glass-input {
+                padding: 10px 12px;
+                font-size: 0.9em;
+            }
+            .glass-btn {
+                padding: 10px;
+                font-size: 0.9em;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="glass-container">
+        <div class="logo">🕳️ BLACK HOLE</div>
+        <div class="subtitle">найди команду или работу в геймдеве</div>
+
+        <!-- АВТОРИЗАЦИЯ -->
+        <div id="authBlock">
+            <input class="glass-input" type="email" id="loginInput" placeholder="почта" />
+            <input class="glass-input" type="password" id="passInput" placeholder="пароль" />
+            <select class="glass-input" id="regRole">
+                <option value="не указана">выбери свою роль</option>
+                <option>программист</option>
+                <option>художник</option>
+                <option>композитор</option>
+                <option>геймдизайнер</option>
+                <option>тестировщик</option>
+                <option>продюсер</option>
+            </select>
+            <input class="glass-input" type="text" id="regBio" placeholder="расскажи о себе (необязательно)" />
+            <button class="glass-btn btn-gold" id="registerBtn">зарегистрироваться</button>
+            <button class="glass-btn btn-ghost" id="loginBtn">войти</button>
+            <div id="authMessage" class="message"></div>
+        </div>
+
+        <!-- ПОЛЬЗОВАТЕЛЬ -->
+        <div id="userBlock" class="hidden">
+            <div class="user-greeting">👋 привет, <span id="userName"></span></div>
+            <button class="glass-btn btn-danger" id="logoutBtn" style="margin-top:4px;">выйти</button>
+            <button class="glass-btn btn-ghost" id="editProfileBtn" style="margin-top:4px;">✏️ редактировать профиль</button>
+
+            <div id="editProfileForm" class="hidden edit-form">
+                <h4 style="color:#f0b800;">редактировать профиль</h4>
+                <select class="glass-input" id="editRole">
+                    <option>программист</option>
+                    <option>художник</option>
+                    <option>композитор</option>
+                    <option>геймдизайнер</option>
+                    <option>тестировщик</option>
+                    <option>продюсер</option>
+                </select>
+                <select class="glass-input" id="editEngine">
+                    <option>godot</option>
+                    <option>unity</option>
+                    <option>unreal</option>
+                    <option>свой</option>
+                    <option>не указан</option>
+                </select>
+                <input class="glass-input" type="text" id="editBio" placeholder="о себе" />
+                <input class="glass-input" type="text" id="editContacts" placeholder="контакты" />
+                <button class="glass-btn btn-gold" id="saveProfileBtn">сохранить</button>
+                <button class="glass-btn btn-ghost" id="cancelEditProfileBtn">отмена</button>
+            </div>
+
+            <hr class="divider" />
+
+            <!-- ТАБЫ -->
+            <div class="tabs" id="tabButtons">
+                <button class="tab-btn active" data-tab="search">🔍 поиск</button>
+                <button class="tab-btn" data-tab="create">➕ создать</button>
+                <button class="tab-btn" data-tab="work">💼 работа</button>
+                <button class="tab-btn" data-tab="favorites">⭐ избранное</button>
+            </div>
+
+            <!-- ПОИСК -->
+            <div class="tab-content active" id="tabSearch">
+                <div class="search-row">
+                    <input type="text" id="searchText" placeholder="🔍 поиск по тексту" oninput="renderAll()" />
+                </div>
+                <div class="filter-row">
+                    <select id="filterRole" onchange="renderAll()">
+                        <option value="all">все роли</option>
+                        <option>программист</option>
+                        <option>художник</option>
+                        <option>композитор</option>
+                        <option>геймдизайнер</option>
+                        <option>тестировщик</option>
+                        <option>продюсер</option>
+                    </select>
+                    <select id="filterEngine" onchange="renderAll()">
+                        <option value="all">все движки</option>
+                        <option>godot</option>
+                        <option>unity</option>
+                        <option>unreal</option>
+                        <option>свой</option>
+                    </select>
+                </div>
+                <div id="searchResults"></div>
+            </div>
+
+            <!-- СОЗДАТЬ -->
+            <div class="tab-content" id="tabCreate">
+                <h3 style="color:rgba(255,255,255,0.6);font-weight:400;font-size:1em;margin-bottom:12px;">создать объявление</h3>
+                <select class="glass-input" id="adType">
+                    <option value="team">🔍 ищу команду</option>
+                    <option value="work">💼 ищу работу</option>
+                </select>
+                <select class="glass-input" id="adRole">
+                    <option value="">какая роль?</option>
+                    <option>программист</option>
+                    <option>художник</option>
+                    <option>композитор</option>
+                    <option>геймдизайнер</option>
+                    <option>тестировщик</option>
+                    <option>продюсер</option>
+                </select>
+                <select class="glass-input" id="adEngine">
+                    <option value="">движок</option>
+                    <option>godot</option>
+                    <option>unity</option>
+                    <option>unreal</option>
+                    <option>свой</option>
+                    <option>не важно</option>
+                </select>
+                <input class="glass-input" type="text" id="adTitle" placeholder="заголовок" />
+                <textarea class="glass-input" id="adDesc" rows="3" placeholder="опиши проект..."></textarea>
+                <input class="glass-input" type="text" id="adContacts" placeholder="контакты (telegram/discord)" />
+
+                <div class="file-input-wrapper">
+                    <input type="file" id="adImage" accept="image/*" />
+                    <label class="file-label" id="adImageLabel">📷 прикрепить фото</label>
+                    <div id="adImagePreview"></div>
+                </div>
+
+                <button class="glass-btn btn-gold" id="publishBtn">опубликовать</button>
+                <div id="adMessage" class="message"></div>
+            </div>
+
+            <!-- РАБОТА -->
+            <div class="tab-content" id="tabWork">
+                <div class="search-row">
+                    <input type="text" id="searchTextWork" placeholder="🔍 поиск по тексту" oninput="renderAll()" />
+                </div>
+                <div class="filter-row">
+                    <select id="filterWorkRole" onchange="renderAll()">
+                        <option value="all">все роли</option>
+                        <option>программист</option>
+                        <option>художник</option>
+                        <option>композитор</option>
+                        <option>геймдизайнер</option>
+                        <option>тестировщик</option>
+                        <option>продюсер</option>
+                    </select>
+                    <select id="filterWorkEngine" onchange="renderAll()">
+                        <option value="all">все движки</option>
+                        <option>godot</option>
+                        <option>unity</option>
+                        <option>unreal</option>
+                        <option>свой</option>
+                    </select>
+                </div>
+                <div id="workResults"></div>
+            </div>
+
+            <!-- ИЗБРАННОЕ -->
+            <div class="tab-content" id="tabFavorites">
+                <div id="favoritesResults"></div>
+            </div>
+
+            <!-- ЧАТ -->
+            <div id="chatBlock" class="hidden">
+                <button class="btn-back" id="chatBackBtn">← назад</button>
+                <div class="glass-card" style="cursor:default;">
+                    <div class="card-title" id="chatPartnerName">Чат</div>
+                    <div class="chat-messages" id="chatMessages"></div>
+                    <div class="chat-input-row">
+                        <input type="text" id="chatInput" placeholder="сообщение..." />
+                        <button id="chatSendBtn">отправить</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ПРОФИЛЬ -->
+            <div id="profileBlock" class="hidden">
+                <button class="btn-back" id="profileBackBtn">← назад</button>
+                <div class="glass-card" style="cursor:default;">
+                    <div class="profile-avatar" id="profileAvatar">👤</div>
+                    <div class="profile-field">логин</div>
+                    <div class="profile-value" id="profileLogin">—</div>
+                    <div class="profile-field">роль</div>
+                    <div class="profile-value" id="profileRole">—</div>
+                    <div class="profile-field">движок</div>
+                    <div class="profile-value" id="profileEngine">—</div>
+                    <div class="profile-field">о себе</div>
+                    <div class="profile-value" id="profileBio">—</div>
+                    <div class="profile-field">контакты</div>
+                    <div class="profile-value" id="profileContacts">—</div>
+                    <button class="glass-btn btn-chat" id="profileChatBtn" style="margin-top:8px;">💬 написать</button>
+                    <div class="profile-field" style="margin-top:12px;">объявления пользователя</div>
+                    <div id="profileAds"></div>
+                </div>
+            </div>
+
+            <!-- РЕДАКТИРОВАНИЕ ОБЪЯВЛЕНИЯ -->
+            <div id="editAdBlock" class="hidden">
+                <button class="btn-back" id="editAdBackBtn">← назад</button>
+                <div class="edit-form">
+                    <h4 style="color:#f0b800;">редактировать объявление</h4>
+                    <input class="glass-input" type="text" id="editAdTitle" placeholder="заголовок" />
+                    <textarea class="glass-input" id="editAdDesc" rows="3" placeholder="описание"></textarea>
+                    <input class="glass-input" type="text" id="editAdContacts" placeholder="контакты" />
+                    <button class="glass-btn btn-gold" id="saveAdEditBtn">сохранить</button>
+                    <button class="glass-btn btn-ghost" id="cancelAdEditBtn">отмена</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="footer-note">BLACK HOLE · VIS1TOR · 13 ЛЕТ</div>
+    </div>
+
+    <script>
+        // ============================================================
+        // 1. НАСТРОЙКИ FIREBASE
+        // ============================================================
+        const firebaseConfig = {
+            apiKey: "AIzaSyC6J2lDt-ia1yQqrMoJ7OF7tQMJ0jNNmRo",
+            authDomain: "blackhole-team.firebaseapp.com",
+            projectId: "blackhole-team",
+            storageBucket: "blackhole-team.firebasestorage.app",
+            messagingSenderId: "560063023296",
+            appId: "1:560063023296:web:7c3da86d7776b6f0800525"
+        };
+
+        // ============================================================
+        // 2. ИНИЦИАЛИЗАЦИЯ
+        // ============================================================
+        firebase.initializeApp(firebaseConfig);
+        const auth = firebase.auth();
+        const db = firebase.firestore();
+
+        // ============================================================
+        // 3. ПЕРЕМЕННЫЕ
+        // ============================================================
+        let currentUser = null;
+        let currentUserEmail = null;
+        let currentChatPartner = null;
+        let editingAdId = null;
+        let selectedImageData = null;
+        let allAds = [];
+        let allUsers = {};
+        let allFavs = [];
+        let allChats = {};
+        let allComments = {};
+
+        // ============================================================
+        // 4. ВСПОМОГАТЕЛЬНЫЕ
+        // ============================================================
+        function timeAgo(dateStr) {
+            if (!dateStr) return 'только что';
+            const now = new Date();
+            const then = new Date(dateStr);
+            const diff = Math.floor((now - then) / 1000);
+            if (diff < 60) return 'только что';
+            if (diff < 3600) return Math.floor(diff / 60) + ' мин назад';
+            if (diff < 86400) return Math.floor(diff / 3600) + ' ч назад';
+            if (diff < 172800) return 'вчера';
+            return then.toLocaleDateString('ru-RU') + ' ' + then.toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' });
+        }
+
+        function getAvatarColor(email) {
+            const colors = ['#f0b800', '#66ccff', '#ff6666', '#66cc88', '#cc66ff', '#ff9966', '#66ffcc'];
+            let hash = 0;
+            const str = email || 'anon';
+            for (let i = 0; i < str.length; i++) { hash = str.charCodeAt(i) + ((hash << 5) - hash); }
+            return colors[Math.abs(hash) % colors.length];
+        }
+
+        function avatarHtml(email) {
+            const color = getAvatarColor(email);
+            const letter = (email || '?').charAt(0).toUpperCase();
+            return `<div class="profile-avatar" style="background:${color}30;border:2px solid ${color};color:${color};">${letter}</div>`;
+        }
+
+        function getChatId(user1, user2) {
+            return [user1, user2].sort().join('_');
+        }
+
+        function notify(title, text) {
+            const el = document.createElement('div');
+            el.className = 'notification';
+            el.innerHTML = `<div class="notif-title">${title}</div><div class="notif-text">${text}</div>`;
+            document.body.appendChild(el);
+            setTimeout(() => el.remove(), 4000);
+        }
+
+        // ============================================================
+        // 5. ЗАГРУЗКА ДАННЫХ (БЕЗ СОРТИРОВКИ)
+        // ============================================================
+        function loadAds() {
+            db.collection('ads')
+                .get()
+                .then((snapshot) => {
+                    allAds = [];
+                    snapshot.forEach(doc => {
+                        allAds.push({ id: doc.id, ...doc.data() });
+                    });
+                    // Сортируем вручную
+                    allAds.sort((a, b) => {
+                        if (a.createdAt < b.createdAt) return 1;
+                        if (a.createdAt > b.createdAt) return -1;
+                        return 0;
+                    });
+                    renderAll();
+                })
+                .catch((error) => {
+                    console.error('Ошибка загрузки объявлений:', error);
+                });
+        }
+
+        function loadUsers() {
+            db.collection('users')
+                .get()
+                .then((snapshot) => {
+                    allUsers = {};
+                    snapshot.forEach(doc => {
+                        allUsers[doc.id] = doc.data();
+                    });
+                    renderAll();
+                })
+                .catch((error) => {
+                    console.error('Ошибка загрузки пользователей:', error);
+                });
+        }
+
+        function loadFavorites() {
+            if (!currentUser) return;
+            db.collection('favorites')
+                .where('userId', '==', currentUser)
+                .get()
+                .then((snapshot) => {
+                    allFavs = [];
+                    snapshot.forEach(doc => {
+                        allFavs.push(doc.data().adId);
+                    });
+                    renderAll();
+                })
+                .catch((error) => {
+                    console.error('Ошибка загрузки избранного:', error);
+                });
+        }
+
+        function loadChats() {
+            if (!currentUser) return;
+            db.collection('chats')
+                .where('participants', 'array-contains', currentUser)
+                .get()
+                .then((snapshot) => {
+                    allChats = {};
+                    snapshot.forEach(doc => {
+                        allChats[doc.id] = doc.data();
+                    });
+                    renderAll();
+                })
+                .catch((error) => {
+                    console.error('Ошибка загрузки чатов:', error);
+                });
+        }
+
+        function loadCommentsForAd(adId) {
+            db.collection('comments')
+                .where('adId', '==', adId)
+                .get()
+                .then((snapshot) => {
+                    allComments[adId] = [];
+                    snapshot.forEach(doc => {
+                        allComments[adId].push({ id: doc.id, ...doc.data() });
+                    });
+                    renderAll();
+                })
+                .catch((error) => {
+                    console.error('Ошибка загрузки комментариев:', error);
+                });
+        }
+
+        // ============================================================
+        // 6. АВТОРИЗАЦИЯ
+        // ============================================================
+        function showUser() {
+            document.getElementById('authBlock').classList.add('hidden');
+            document.getElementById('userBlock').classList.remove('hidden');
+            document.getElementById('userName').innerText = currentUserEmail || currentUser;
+            document.getElementById('profileBlock').classList.add('hidden');
+            document.getElementById('chatBlock').classList.add('hidden');
+            document.getElementById('editAdBlock').classList.add('hidden');
+            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('hidden'));
+            document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+            document.getElementById('tabSearch').classList.add('active');
+            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+            document.querySelector('.tab-btn[data-tab="search"]').classList.add('active');
+
+            loadAds();
+            loadUsers();
+            loadFavorites();
+            loadChats();
+        }
+
+        function registerUser() {
+            const email = document.getElementById('loginInput').value.trim();
+            const pass = document.getElementById('passInput').value.trim();
+            const role = document.getElementById('regRole').value;
+            const bio = document.getElementById('regBio').value.trim();
+            const msg = document.getElementById('authMessage');
+
+            if (!email || !pass) { msg.innerText = '❌ заполни почту и пароль';
+                msg.className = 'message error'; return; }
+            if (pass.length < 6) { msg.innerText = '❌ пароль минимум 6 символов';
+                msg.className = 'message error'; return; }
+
+            auth.createUserWithEmailAndPassword(email, pass)
+                .then((userCredential) => {
+                    const user = userCredential.user;
+                    return db.collection('users').doc(user.uid).set({
+                        email: email,
+                        role: role || 'не указана',
+                        bio: bio || '—',
+                        engine: 'не указан',
+                        contacts: 'не указаны',
+                        createdAt: new Date().toISOString()
+                    });
+                })
+                .then(() => {
+                    msg.innerText = '✅ регистрация успешна! войди.';
+                    msg.className = 'message success';
+                })
+                .catch((error) => {
+                    msg.innerText = '❌ ' + error.message;
+                    msg.className = 'message error';
+                });
+        }
+
+        function loginUser() {
+            const email = document.getElementById('loginInput').value.trim();
+            const pass = document.getElementById('passInput').value.trim();
+            const msg = document.getElementById('authMessage');
+
+            if (!email || !pass) { msg.innerText = '❌ заполни все поля';
+                msg.className = 'message error'; return; }
+
+            auth.signInWithEmailAndPassword(email, pass)
+                .then((userCredential) => {
+                    currentUser = userCredential.user.uid;
+                    currentUserEmail = userCredential.user.email;
+                    localStorage.setItem('currentUser', currentUser);
+                    localStorage.setItem('currentUserEmail', currentUserEmail);
+                    msg.innerText = '';
+                    showUser();
+                    notify('👋 добро пожаловать', 'ты в Black Hole');
+                })
+                .catch((error) => {
+                    msg.innerText = '❌ ' + error.message;
+                    msg.className = 'message error';
+                });
+        }
+
+        function logoutUser() {
+            auth.signOut();
+            currentUser = null;
+            currentUserEmail = null;
+            localStorage.removeItem('currentUser');
+            localStorage.removeItem('currentUserEmail');
+            document.getElementById('authBlock').classList.remove('hidden');
+            document.getElementById('userBlock').classList.add('hidden');
+            allAds = [];
+            allUsers = {};
+            allFavs = [];
+            renderAll();
+        }
+
+        // ============================================================
+        // 7. ПРОФИЛЬ
+        // ============================================================
+        function openProfile(userId) {
+            const userData = allUsers[userId] || {};
+            const email = userData.email || userId;
+            const ads = allAds.filter(ad => ad.userId === userId);
+
+            document.getElementById('profileAvatar').parentElement.innerHTML = avatarHtml(email) +
+                document.getElementById('profileAvatar').parentElement.innerHTML;
+            document.getElementById('profileLogin').innerText = email;
+            document.getElementById('profileRole').innerText = userData.role || 'не указана';
+            document.getElementById('profileEngine').innerText = userData.engine || 'не указан';
+            document.getElementById('profileBio').innerText = userData.bio || '—';
+            document.getElementById('profileContacts').innerText = userData.contacts || 'не указаны';
+
+            const container = document.getElementById('profileAds');
+            if (ads.length === 0) {
+                container.innerHTML = '<div style="color:rgba(255,255,255,0.2);padding:8px 0;">нет объявлений</div>';
+            } else {
+                let html = '';
+                ads.forEach(ad => {
+                    const badge = ad.type === 'team' ? '<span class="type-badge badge-team">🔍 команда</span>' :
+                        '<span class="type-badge badge-work">💼 работа</span>';
+                    html += `
+                            <div class="glass-card" style="margin:8px 0;padding:12px 16px;cursor:default;">
+                                ${badge}
+                                <div class="card-title" style="font-size:1em;">${ad.title}</div>
+                                <div class="card-tags">🎮 ${ad.role} · ⚙️ ${ad.engine}</div>
+                                <div class="card-desc" style="font-size:0.9em;">${ad.description}</div>
+                                ${ad.image ? `<img src="${ad.image}" class="card-img" />` : ''}
+                            </div>
+                        `;
+                });
+                container.innerHTML = html;
+            }
+
+            document.getElementById('profileChatBtn').onclick = function() { openChat(userId); };
+
+            document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
+            document.querySelectorAll('.tab-btn').forEach(b => b.classList.add('hidden'));
+            document.getElementById('profileBlock').classList.remove('hidden');
+            document.getElementById('chatBlock').classList.add('hidden');
+        }
+
+        function closeProfile() {
+            document.getElementById('profileBlock').classList.add('hidden');
+            document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+            document.getElementById('tabSearch').classList.add('active');
+            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('hidden'));
+            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+            document.querySelector('.tab-btn[data-tab="search"]').classList.add('active');
+            renderAll();
+        }
+
+        // ============================================================
+        // 8. РЕДАКТИРОВАНИЕ ПРОФИЛЯ
+        // ============================================================
+        document.getElementById('editProfileBtn').addEventListener('click', function() {
+            const userData = allUsers[currentUser] || {};
+            document.getElementById('editRole').value = userData.role || 'не указана';
+            document.getElementById('editEngine').value = userData.engine || 'не указан';
+            document.getElementById('editBio').value = userData.bio || '';
+            document.getElementById('editContacts').value = userData.contacts || '';
+            document.getElementById('editProfileForm').classList.toggle('hidden');
+        });
+
+        document.getElementById('cancelEditProfileBtn').addEventListener('click', function() {
+            document.getElementById('editProfileForm').classList.add('hidden');
+        });
+
+        document.getElementById('saveProfileBtn').addEventListener('click', function() {
+            if (!currentUser) return;
+            db.collection('users').doc(currentUser).update({
+                role: document.getElementById('editRole').value,
+                engine: document.getElementById('editEngine').value,
+                bio: document.getElementById('editBio').value.trim() || '—',
+                contacts: document.getElementById('editContacts').value.trim() || 'не указаны'
+            }).then(() => {
+                document.getElementById('editProfileForm').classList.add('hidden');
+                notify('✅ профиль обновлён', 'данные сохранены');
+                renderAll();
+            }).catch((error) => {
+                notify('❌ ошибка', error.message);
+            });
+        });
+
+        // ============================================================
+        // 9. ОБЪЯВЛЕНИЯ
+        // ============================================================
+        document.getElementById('adImage').addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = function(event) {
+                selectedImageData = event.target.result;
+                document.getElementById('adImagePreview').innerHTML = `<img src="${selectedImageData}" class="preview-img" />`;
+                document.getElementById('adImageLabel').textContent = '✅ фото выбрано';
+                document.getElementById('adImageLabel').classList.add('has-file');
+            };
+            reader.readAsDataURL(file);
+        });
+
+        function createAd() {
+            const type = document.getElementById('adType').value;
+            const role = document.getElementById('adRole').value;
+            const engine = document.getElementById('adEngine').value;
+            const title = document.getElementById('adTitle').value.trim();
+            const description = document.getElementById('adDesc').value.trim();
+            const contacts = document.getElementById('adContacts').value.trim();
+            const msg = document.getElementById('adMessage');
+
+            if (!title || !description) { msg.innerText = '❌ заполни всё';
+                msg.className = 'message error'; return; }
+
+            db.collection('ads').add({
+                userId: currentUser,
+                type: type,
+                role: role || 'не указана',
+                engine: engine || 'не указан',
+                title: title,
+                description: description,
+                contacts: contacts || 'не указаны',
+                image: selectedImageData || null,
+                createdAt: new Date().toISOString(),
+                views: 0
+            }).then(() => {
+                selectedImageData = null;
+                document.getElementById('adImagePreview').innerHTML = '';
+                document.getElementById('adImageLabel').textContent = '📷 прикрепить фото';
+                document.getElementById('adImageLabel').classList.remove('has-file');
+                document.getElementById('adImage').value = '';
+                document.getElementById('adTitle').value = '';
+                document.getElementById('adDesc').value = '';
+                document.getElementById('adContacts').value = '';
+                document.getElementById('adRole').value = '';
+                document.getElementById('adEngine').value = '';
+                msg.innerText = '✅ опубликовано!';
+                msg.className = 'message success';
+                notify('📢 объявление создано', title);
+                loadAds();
+            }).catch((error) => {
+                msg.innerText = '❌ ' + error.message;
+                msg.className = 'message error';
+            });
+        }
+
+        function deleteAd(adId) {
+            if (!confirm('удалить объявление?')) return;
+            db.collection('ads').doc(adId).delete()
+                .then(() => {
+                    notify('🗑️ удалено', 'объявление удалено');
+                    loadAds();
+                })
+                .catch((error) => {
+                    notify('❌ ошибка', error.message);
+                });
+        }
+
+        function startEditAd(adId) {
+            const ad = allAds.find(a => a.id === adId);
+            if (!ad) return;
+            editingAdId = adId;
+            document.getElementById('editAdTitle').value = ad.title;
+            document.getElementById('editAdDesc').value = ad.description;
+            document.getElementById('editAdContacts').value = ad.contacts;
+            document.getElementById('editAdBlock').classList.remove('hidden');
+            document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
+            document.querySelectorAll('.tab-btn').forEach(b => b.classList.add('hidden'));
+        }
+
+        function saveAdEdit() {
+            const title = document.getElementById('editAdTitle').value.trim();
+            const description = document.getElementById('editAdDesc').value.trim();
+            const contacts = document.getElementById('editAdContacts').value.trim();
+            if (!title || !description) { alert('заполни всё'); return; }
+
+            db.collection('ads').doc(editingAdId).update({
+                title: title,
+                description: description,
+                contacts: contacts || 'не указаны'
+            }).then(() => {
+                document.getElementById('editAdBlock').classList.add('hidden');
+                document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+                document.getElementById('tabSearch').classList.add('active');
+                document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('hidden'));
+                document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+                document.querySelector('.tab-btn[data-tab="search"]').classList.add('active');
+                notify('✏️ обновлено', 'объявление изменено');
+                loadAds();
+            }).catch((error) => {
+                notify('❌ ошибка', error.message);
+            });
+        }
+
+        document.getElementById('cancelAdEditBtn').addEventListener('click', function() {
+            document.getElementById('editAdBlock').classList.add('hidden');
+            document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+            document.getElementById('tabSearch').classList.add('active');
+            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('hidden'));
+            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+            document.querySelector('.tab-btn[data-tab="search"]').classList.add('active');
+        });
+
+        document.getElementById('saveAdEditBtn').addEventListener('click', saveAdEdit);
+        document.getElementById('editAdBackBtn').addEventListener('click', function() {
+            document.getElementById('editAdBlock').classList.add('hidden');
+            document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+            document.getElementById('tabSearch').classList.add('active');
+            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('hidden'));
+            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+            document.querySelector('.tab-btn[data-tab="search"]').classList.add('active');
+        });
+
+        // ============================================================
+        // 10. КОММЕНТАРИИ
+        // ============================================================
+        function addComment(adId) {
+            const input = document.getElementById('commentInput_' + adId);
+            const text = input.value.trim();
+            if (!text) return;
+
+            db.collection('comments').add({
+                adId: adId,
+                userId: currentUser,
+                text: text,
+                createdAt: new Date().toISOString()
+            }).then(() => {
+                input.value = '';
+                notify('💬 комментарий добавлен', text);
+                loadCommentsForAd(adId);
+            }).catch((error) => {
+                notify('❌ ошибка', error.message);
+            });
+        }
+
+        function renderComments(adId) {
+            const comments = allComments[adId] || [];
+            if (comments.length === 0) return '';
+
+            let html = `<div class="comments">`;
+            comments.forEach(c => {
+                const userData = allUsers[c.userId] || {};
+                const author = userData.email || c.userId;
+                html += `
+                        <div class="comment">
+                            <span class="c-author">${author}</span>
+                            <span class="c-time">${timeAgo(c.createdAt)}</span>
+                            ${c.text}
+                        </div>
+                    `;
+            });
+            html += `
+                    <div class="comment-input-row">
+                        <input type="text" id="commentInput_${adId}" placeholder="написать комментарий..." />
+                        <button onclick="addComment('${adId}')">→</button>
+                    </div>
+                </div>
+            `;
+            return html;
+        }
+
+        // ============================================================
+        // 11. ИЗБРАННОЕ
+        // ============================================================
+        function toggleFav(adId) {
+            if (!currentUser) return;
+            const isFav = allFavs.includes(adId);
+
+            if (isFav) {
+                db.collection('favorites')
+                    .where('userId', '==', currentUser)
+                    .where('adId', '==', adId)
+                    .get()
+                    .then((snapshot) => {
+                        snapshot.forEach(doc => {
+                            doc.ref.delete();
+                        });
+                        loadFavorites();
+                    });
+            } else {
+                db.collection('favorites').add({
+                    userId: currentUser,
+                    adId: adId
+                }).then(() => {
+                    loadFavorites();
+                });
+            }
+        }
+
+        function isFav(adId) {
+            return allFavs.includes(adId);
+        }
+
+        // ============================================================
+        // 12. ЧАТ
+        // ============================================================
+        function openChat(partnerId) {
+            currentChatPartner = partnerId;
+            document.getElementById('chatPartnerName').innerText = '💬 ' + (allUsers[partnerId]?.email || partnerId);
+            document.getElementById('chatBlock').classList.remove('hidden');
+            document.getElementById('profileBlock').classList.add('hidden');
+            document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
+            document.querySelectorAll('.tab-btn').forEach(b => b.classList.add('hidden'));
+            renderChat();
+        }
+
+        function closeChat() {
+            currentChatPartner = null;
+            document.getElementById('chatBlock').classList.add('hidden');
+            document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+            document.getElementById('tabSearch').classList.add('active');
+            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('hidden'));
+            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+            document.querySelector('.tab-btn[data-tab="search"]').classList.add('active');
+            renderAll();
+        }
+
+        function renderChat() {
+            if (!currentChatPartner) return;
+            const chatId = getChatId(currentUser, currentChatPartner);
+            const chatData = allChats[chatId] || { messages: [] };
+            const messages = chatData.messages || [];
+            const container = document.getElementById('chatMessages');
+
+            if (messages.length === 0) {
+                container.innerHTML =
+                    '<div style="color:rgba(255,255,255,0.2);text-align:center;padding:20px 0;">нет сообщений</div>';
+                return;
+            }
+
+            let html = '';
+            messages.forEach(m => {
+                const isMe = m.sender === currentUser;
+                const senderName = allUsers[m.sender]?.email || m.sender;
+                html += `
+                        <div class="msg" style="text-align:${isMe ? 'right' : 'left'};background:${isMe ? 'rgba(240,184,0,0.1)' : 'rgba(255,255,255,0.03)'};">
+                            <span class="sender">${isMe ? 'я' : senderName}</span>
+                            <span class="time">${timeAgo(m.time)}</span>
+                            <div>${m.text}</div>
+                        </div>
+                    `;
+            });
+            container.innerHTML = html;
+            container.scrollTop = container.scrollHeight;
+        }
+
+        function sendChatMessage() {
+            const input = document.getElementById('chatInput');
+            const text = input.value.trim();
+            if (!text || !currentChatPartner) return;
+
+            const chatId = getChatId(currentUser, currentChatPartner);
+            const chatData = allChats[chatId] || { participants: [currentUser, currentChatPartner], messages: [] };
+            chatData.messages.push({
+                sender: currentUser,
+                text: text,
+                time: new Date().toISOString()
+            });
+
+            db.collection('chats').doc(chatId).set(chatData)
+                .then(() => {
+                    input.value = '';
+                    notify('💬 сообщение отправлено', text);
+                    loadChats();
+                })
+                .catch((error) => {
+                    notify('❌ ошибка', error.message);
+                });
+        }
+
+        document.getElementById('chatSendBtn').addEventListener('click', sendChatMessage);
+        document.getElementById('chatInput').addEventListener('keydown', function(e) {
+            if (e.key === 'Enter') sendChatMessage();
+        });
+        document.getElementById('chatBackBtn').addEventListener('click', closeChat);
+
+        // ============================================================
+        // 13. ОТРИСОВКА
+        // ============================================================
+        function renderAdsList(containerId, filterType, roleFilterId, engineFilterId, searchInputId, favMode) {
+            const container = document.getElementById(containerId);
+            const roleFilter = document.getElementById(roleFilterId);
+            const engineFilter = document.getElementById(engineFilterId);
+            const searchText = document.getElementById(searchInputId) ? document.getElementById(searchInputId).value
+                .toLowerCase() : '';
+
+            let filtered = allAds.filter(ad => {
+                if (filterType && ad.type !== filterType) return false;
+                if (roleFilter && roleFilter.value !== 'all' && ad.role !== roleFilter.value) return false;
+                if (engineFilter && engineFilter.value !== 'all' && ad.engine !== engineFilter.value) return false;
+                if (favMode && !isFav(ad.id)) return false;
+                if (searchText && !ad.title.toLowerCase().includes(searchText) && !ad.description.toLowerCase().includes(
+                        searchText)) return false;
+                return true;
+            });
+
+            // Подгружаем комментарии для отображения
+            filtered.forEach(ad => {
+                if (!allComments[ad.id]) {
+                    loadCommentsForAd(ad.id);
+                }
+            });
+
+            if (filtered.length === 0) {
+                container.innerHTML =
+                    '<div style="color:rgba(255,255,255,0.2);text-align:center;padding:20px 0;">пока ничего нет</div>';
+                return;
+            }
+
+            let html = '';
+            filtered.forEach(ad => {
+                // Увеличиваем просмотры
+                if (ad.userId !== currentUser) {
+                    const views = (ad.views || 0) + 1;
+                    db.collection('ads').doc(ad.id).update({ views: views }).catch(() => {});
+                }
+
+                const badge = ad.type === 'team' ? '<span class="type-badge badge-team">🔍 ищу команду</span>' :
+                    '<span class="type-badge badge-work">💼 ищу работу</span>';
+                const isOwn = ad.userId === currentUser;
+                const commentsHtml = renderComments(ad.id);
+                const userData = allUsers[ad.userId] || {};
+                const authorEmail = userData.email || ad.userId;
+
+                html += `
+                        <div class="glass-card" id="ad-${ad.id}">
+                            ${badge}
+                            <div class="card-title">${ad.title}</div>
+                            <div class="card-tags">🎮 ${ad.role} · ⚙️ ${ad.engine} · ${timeAgo(ad.createdAt)} <span class="views">👁️ ${ad.views || 0}</span></div>
+                            <div class="card-desc">${ad.description}</div>
+                            ${ad.image ? `<img src="${ad.image}" class="card-img" />` : ''}
+                            <div class="card-contacts">
+                                📱 ${ad.contacts}
+                                <span class="clickable-author" onclick="openProfile('${ad.userId}')">· ✉️ ${authorEmail}</span>
+                            </div>
+                            <div class="card-actions">
+                                <button class="btn-small btn-fav ${isFav(ad.id)?'active':''}" onclick="toggleFav('${ad.id}')">${isFav(ad.id)?'★':'☆'}</button>
+                                ${isOwn ? `
+                                    <button class="btn-small btn-edit" onclick="startEditAd('${ad.id}')">✏️</button>
+                                    <button class="btn-small btn-delete" onclick="deleteAd('${ad.id}')">🗑️</button>
+                                ` : `
+                                    <button class="btn-small btn-chat" onclick="openChat('${ad.userId}')">💬</button>
+                                `}
+                            </div>
+                            ${commentsHtml}
+                        </div>
+                    `;
+            });
+            container.innerHTML = html;
+        }
+
+        function renderAll() {
+            renderAdsList('searchResults', 'team', 'filterRole', 'filterEngine', 'searchText', false);
+            renderAdsList('workResults', 'work', 'filterWorkRole', 'filterWorkEngine', 'searchTextWork', false);
+            renderAdsList('favoritesResults', null, 'filterRole', 'filterEngine', null, true);
+        }
+
+        // ============================================================
+        // 14. ВКЛАДКИ
+        // ============================================================
+        document.getElementById('tabButtons').addEventListener('click', function(e) {
+            const btn = e.target.closest('.tab-btn');
+            if (!btn) return;
+            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            const tabId = btn.dataset.tab;
+            document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+            document.getElementById('tab' + tabId.charAt(0).toUpperCase() + tabId.slice(1)).classList.add('active');
+        });
+
+        document.getElementById('profileBackBtn').addEventListener('click', closeProfile);
+        document.getElementById('registerBtn').addEventListener('click', registerUser);
+        document.getElementById('loginBtn').addEventListener('click', loginUser);
+        document.getElementById('logoutBtn').addEventListener('click', logoutUser);
+        document.getElementById('publishBtn').addEventListener('click', createAd);
+
+        document.getElementById('filterRole').addEventListener('change', renderAll);
+        document.getElementById('filterEngine').addEventListener('change', renderAll);
+        document.getElementById('filterWorkRole').addEventListener('change', renderAll);
+        document.getElementById('filterWorkEngine').addEventListener('change', renderAll);
+
+        // ============================================================
+        // 15. АВТО-ВХОД
+        // ============================================================
+        auth.onAuthStateChanged((user) => {
+            if (user) {
+                currentUser = user.uid;
+                currentUserEmail = user.email;
+                localStorage.setItem('currentUser', currentUser);
+                localStorage.setItem('currentUserEmail', currentUserEmail);
+                if (document.getElementById('userBlock').classList.contains('hidden')) {
+                    showUser();
+                }
+            } else {
+                const savedUser = localStorage.getItem('currentUser');
+                if (savedUser) {
+                    // пытаемся восстановить сессию
+                } else {
+                    document.getElementById('authBlock').classList.remove('hidden');
+                    document.getElementById('userBlock').classList.add('hidden');
+                }
+            }
+        });
+
+        // Если уже есть сохранённый пользователь, но Firebase ещё не ответил
+        const savedUser = localStorage.getItem('currentUser');
+        if (savedUser) {
+            // Ждём onAuthStateChanged
+        }
+    </script>
+</body>
+</html>
