@@ -3,9 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Black Hole — с модерацией</title>
+    <title>Black Hole — оптимизированный</title>
 
-    <!-- FIREBASE SDK -->
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js">
     </script>
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js">
@@ -14,7 +13,7 @@
     </script>
 
     <style>
-        /* ===== СТИЛИ (КОРОТКАЯ ВЕРСИЯ) ===== */
+        /* ===== СТИЛИ (КОРОТКО) ===== */
         * {
             margin: 0;
             padding: 0;
@@ -596,6 +595,23 @@
             color: rgba(255, 255, 255, 0.2);
             font-size: 0.7em;
         }
+        .refresh-btn {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.06);
+            color: rgba(255, 255, 255, 0.5);
+            padding: 6px 14px;
+            border-radius: 12px;
+            cursor: pointer;
+            font-size: 0.8em;
+            transition: 0.2s;
+            position: relative;
+            z-index: 1;
+            margin-bottom: 10px;
+        }
+        .refresh-btn:hover {
+            background: rgba(255, 255, 255, 0.08);
+            color: #fff;
+        }
         @media (max-width: 480px) {
             .glass-container {
                 padding: 16px 12px;
@@ -682,13 +698,16 @@
                 <button class="tab-btn" data-tab="favorites">⭐ избранное</button>
             </div>
 
+            <!-- КНОПКА ОБНОВИТЬ -->
+            <button class="refresh-btn" id="refreshBtn">🔄 обновить</button>
+
             <!-- ПОИСК -->
             <div class="tab-content active" id="tabSearch">
                 <div class="search-row">
-                    <input type="text" id="searchText" placeholder="🔍 поиск по тексту" oninput="renderAll()" />
+                    <input type="text" id="searchText" placeholder="🔍 поиск по тексту" oninput="applyFilters()" />
                 </div>
                 <div class="filter-row">
-                    <select id="filterRole" onchange="renderAll()">
+                    <select id="filterRole" onchange="applyFilters()">
                         <option value="all">все роли</option>
                         <option>программист</option>
                         <option>художник</option>
@@ -697,7 +716,7 @@
                         <option>тестировщик</option>
                         <option>продюсер</option>
                     </select>
-                    <select id="filterEngine" onchange="renderAll()">
+                    <select id="filterEngine" onchange="applyFilters()">
                         <option value="all">все движки</option>
                         <option>godot</option>
                         <option>unity</option>
@@ -708,7 +727,7 @@
                 <div id="searchResults"></div>
             </div>
 
-            <!-- СОЗДАТЬ (С МОДЕРАЦИЕЙ) -->
+            <!-- СОЗДАТЬ -->
             <div class="tab-content" id="tabCreate">
                 <h3 style="color:rgba(255,255,255,0.6);font-weight:400;font-size:1em;margin-bottom:12px;">создать объявление</h3>
                 <select class="glass-input" id="adType">
@@ -742,17 +761,17 @@
                     <div id="adImagePreview"></div>
                 </div>
 
-                <button class="glass-btn btn-gold" id="publishBtn">отправить на модерацию</button>
+                <button class="glass-btn btn-gold" id="publishBtn">опубликовать</button>
                 <div id="adMessage" class="message"></div>
             </div>
 
             <!-- РАБОТА -->
             <div class="tab-content" id="tabWork">
                 <div class="search-row">
-                    <input type="text" id="searchTextWork" placeholder="🔍 поиск по тексту" oninput="renderAll()" />
+                    <input type="text" id="searchTextWork" placeholder="🔍 поиск по тексту" oninput="applyFilters()" />
                 </div>
                 <div class="filter-row">
-                    <select id="filterWorkRole" onchange="renderAll()">
+                    <select id="filterWorkRole" onchange="applyFilters()">
                         <option value="all">все роли</option>
                         <option>программист</option>
                         <option>художник</option>
@@ -761,7 +780,7 @@
                         <option>тестировщик</option>
                         <option>продюсер</option>
                     </select>
-                    <select id="filterWorkEngine" onchange="renderAll()">
+                    <select id="filterWorkEngine" onchange="applyFilters()">
                         <option value="all">все движки</option>
                         <option>godot</option>
                         <option>unity</option>
@@ -830,7 +849,7 @@
 
     <script>
         // ============================================================
-        // 1. FIREBASE
+        // 1. НАСТРОЙКИ
         // ============================================================
         const firebaseConfig = {
             apiKey: "AIzaSyC6J2lDt-ia1yQqrMoJ7OF7tQMJ0jNNmRo",
@@ -846,19 +865,14 @@
         const db = firebase.firestore();
 
         // ============================================================
-        // 2. UNISENDER (ТВОЙ КЛЮЧ)
-        // ============================================================
-        const UNISENDER_API_KEY = '67m4uoowj5ig1ob3irjwfrtcws6hyfere47nwgpa';
-        const YOUR_EMAIL = 'voyadgersovsemodin@gmail.com';
-
-        // ============================================================
-        // 3. ПЕРЕМЕННЫЕ
+        // 2. ПЕРЕМЕННЫЕ
         // ============================================================
         let currentUser = null;
         let currentUserEmail = null;
         let currentChatPartner = null;
         let editingAdId = null;
         let selectedImageData = null;
+        let isLoading = false;
 
         let cache = {
             ads: [],
@@ -870,7 +884,7 @@
         };
 
         // ============================================================
-        // 4. ВСПОМОГАТЕЛЬНЫЕ
+        // 3. ВСПОМОГАТЕЛЬНЫЕ
         // ============================================================
         function timeAgo(dateStr) {
             if (!dateStr) return 'только что';
@@ -910,22 +924,31 @@
             setTimeout(() => el.remove(), 4000);
         }
 
+        function isFav(adId) {
+            return cache.favs.includes(adId);
+        }
+
         // ============================================================
-        // 5. ЗАГРУЗКА ДАННЫХ (ТОЛЬКО ОПУБЛИКОВАННЫЕ)
+        // 4. ЗАГРУЗКА ДАННЫХ (ОДИН РАЗ В МИНУТУ ИЛИ ПО КНОПКЕ)
         // ============================================================
         function loadAllData(force = false) {
+            if (isLoading) return;
+            isLoading = true;
+
             const now = Date.now();
-            if (!force && cache.lastUpdate > 0 && (now - cache.lastUpdate) < 10000) {
+            if (!force && cache.lastUpdate > 0 && (now - cache.lastUpdate) < 60000) {
+                // Данные свежие (меньше минуты) — не грузим
+                isLoading = false;
                 renderAll();
                 return;
             }
 
+            // Загружаем объявления
             db.collection('ads').get()
                 .then((snapshot) => {
                     cache.ads = [];
                     snapshot.forEach(doc => {
                         const data = doc.data();
-                        // Показываем только опубликованные объявления
                         if (data.status === 'published' || !data.status) {
                             cache.ads.push({ id: doc.id, ...data });
                         }
@@ -935,69 +958,65 @@
                         if (a.createdAt > b.createdAt) return -1;
                         return 0;
                     });
-                    cache.lastUpdate = Date.now();
-                    renderAll();
+                    return db.collection('users').get();
                 })
-                .catch(() => renderAll());
-
-            db.collection('users').get()
                 .then((snapshot) => {
                     cache.users = {};
                     snapshot.forEach(doc => {
                         cache.users[doc.id] = doc.data();
                     });
-                    renderAll();
+                    if (currentUser) {
+                        return db.collection('favorites').where('userId', '==', currentUser).get();
+                    }
+                    return null;
                 })
-                .catch(() => {});
-
-            if (currentUser) {
-                db.collection('favorites')
-                    .where('userId', '==', currentUser)
-                    .get()
-                    .then((snapshot) => {
+                .then((snapshot) => {
+                    if (snapshot) {
                         cache.favs = [];
                         snapshot.forEach(doc => {
                             cache.favs.push(doc.data().adId);
                         });
-                        renderAll();
-                    })
-                    .catch(() => {});
-
-                db.collection('chats')
-                    .where('participants', 'array-contains', currentUser)
-                    .get()
-                    .then((snapshot) => {
+                    }
+                    if (currentUser) {
+                        return db.collection('chats').where('participants', 'array-contains', currentUser).get();
+                    }
+                    return null;
+                })
+                .then((snapshot) => {
+                    if (snapshot) {
                         cache.chats = {};
                         snapshot.forEach(doc => {
                             cache.chats[doc.id] = doc.data();
                         });
-                        renderAll();
-                    })
-                    .catch(() => {});
-
-                db.collection('comments').get()
-                    .then((snapshot) => {
-                        cache.comments = {};
-                        snapshot.forEach(doc => {
-                            const data = doc.data();
-                            if (!cache.comments[data.adId]) cache.comments[data.adId] = [];
-                            cache.comments[data.adId].push({ id: doc.id, ...data });
+                    }
+                    return db.collection('comments').get();
+                })
+                .then((snapshot) => {
+                    cache.comments = {};
+                    snapshot.forEach(doc => {
+                        const data = doc.data();
+                        if (!cache.comments[data.adId]) cache.comments[data.adId] = [];
+                        cache.comments[data.adId].push({ id: doc.id, ...data });
+                    });
+                    for (const key in cache.comments) {
+                        cache.comments[key].sort((a, b) => {
+                            if (a.createdAt < b.createdAt) return -1;
+                            if (a.createdAt > b.createdAt) return 1;
+                            return 0;
                         });
-                        for (const key in cache.comments) {
-                            cache.comments[key].sort((a, b) => {
-                                if (a.createdAt < b.createdAt) return -1;
-                                if (a.createdAt > b.createdAt) return 1;
-                                return 0;
-                            });
-                        }
-                        renderAll();
-                    })
-                    .catch(() => {});
-            }
+                    }
+                    cache.lastUpdate = Date.now();
+                    isLoading = false;
+                    renderAll();
+                })
+                .catch(() => {
+                    isLoading = false;
+                    renderAll();
+                });
         }
 
         // ============================================================
-        // 6. АВТОРИЗАЦИЯ
+        // 5. АВТОРИЗАЦИЯ
         // ============================================================
         function showUser() {
             document.getElementById('authBlock').classList.add('hidden');
@@ -1085,157 +1104,7 @@
         }
 
         // ============================================================
-        // 7. ОТПРАВКА ПИСЬМА ЧЕРЕЗ UNISENDER
-        // ============================================================
-        function sendEmail(subject, htmlBody) {
-            return new Promise((resolve, reject) => {
-                const url = 'https://api.unisender.com/ru/api/sendEmail';
-
-                const params = new URLSearchParams();
-                params.append('api_key', UNISENDER_API_KEY);
-                params.append('email', YOUR_EMAIL);
-                params.append('sender_email', YOUR_EMAIL);
-                params.append('sender_name', 'Black Hole Moderation');
-                params.append('subject', subject);
-                params.append('body', htmlBody);
-                params.append('list_id', '1');
-
-                fetch(url, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/x-www-form-urlencoded'
-                    },
-                    body: params
-                })
-                .then(response => response.json())
-                .then(result => {
-                    if (result.result && result.result.email_id) {
-                        resolve();
-                    } else {
-                        reject(new Error(result.error || 'Ошибка отправки письма'));
-                    }
-                })
-                .catch(reject);
-            });
-        }
-
-        // ============================================================
-        // 8. СОЗДАНИЕ ОБЪЯВЛЕНИЯ С МОДЕРАЦИЕЙ
-        // ============================================================
-        function createAdWithModeration() {
-            const type = document.getElementById('adType').value;
-            const role = document.getElementById('adRole').value;
-            const engine = document.getElementById('adEngine').value;
-            const title = document.getElementById('adTitle').value.trim();
-            const description = document.getElementById('adDesc').value.trim();
-            const contacts = document.getElementById('adContacts').value.trim();
-            const msg = document.getElementById('adMessage');
-
-            if (!title || !description) {
-                msg.innerText = '❌ заполни всё';
-                msg.className = 'message error';
-                return;
-            }
-
-            const adData = {
-                userId: currentUser,
-                type: type,
-                role: role || 'не указана',
-                engine: engine || 'не указан',
-                title: title,
-                description: description,
-                contacts: contacts || 'не указаны',
-                image: selectedImageData || null,
-                createdAt: new Date().toISOString(),
-                status: 'pending',
-                views: 0
-            };
-
-            db.collection('ads').add(adData)
-                .then((docRef) => {
-                    const adId = docRef.id;
-
-                    const confirmLink = `https://vis1itor.github.io/blackholeteam/?confirm=${adId}`;
-                    const rejectLink = `https://vis1itor.github.io/blackholeteam/?reject=${adId}`;
-
-                    const htmlBody = `
-                        <h2>📢 Новое объявление на модерацию</h2>
-                        <p><strong>ID:</strong> ${adId}</p>
-                        <p><strong>Автор:</strong> ${currentUserEmail || currentUser}</p>
-                        <p><strong>Заголовок:</strong> ${title}</p>
-                        <p><strong>Описание:</strong> ${description}</p>
-                        <p><strong>Роль:</strong> ${role || 'не указана'}</p>
-                        <p><strong>Движок:</strong> ${engine || 'не указан'}</p>
-                        <p><strong>Контакты:</strong> ${contacts || 'не указаны'}</p>
-                        <hr>
-                        <a href="${confirmLink}" style="background:#f0b800;color:#0a0a0f;padding:10px 20px;border-radius:8px;text-decoration:none;font-weight:bold;display:inline-block;margin:5px;">
-                            ✅ ПОДТВЕРДИТЬ
-                        </a>
-                        <a href="${rejectLink}" style="background:#ff4444;color:#fff;padding:10px 20px;border-radius:8px;text-decoration:none;font-weight:bold;display:inline-block;margin:5px;">
-                            ❌ ОТКЛОНИТЬ
-                        </a>
-                    `;
-
-                    return sendEmail('📢 Новое объявление на модерацию', htmlBody)
-                        .then(() => adId);
-                })
-                .then((adId) => {
-                    selectedImageData = null;
-                    document.getElementById('adImagePreview').innerHTML = '';
-                    document.getElementById('adImageLabel').textContent = '📷 прикрепить фото';
-                    document.getElementById('adImageLabel').classList.remove('has-file');
-                    document.getElementById('adImage').value = '';
-                    document.getElementById('adTitle').value = '';
-                    document.getElementById('adDesc').value = '';
-                    document.getElementById('adContacts').value = '';
-                    document.getElementById('adRole').value = '';
-                    document.getElementById('adEngine').value = '';
-
-                    msg.innerText = '✅ Отправлено на модерацию! Проверь почту.';
-                    msg.className = 'message success';
-                    notify('📨 отправлено', 'объявление ждёт подтверждения');
-                })
-                .catch((error) => {
-                    msg.innerText = '❌ ' + error.message;
-                    msg.className = 'message error';
-                });
-        }
-
-        // ============================================================
-        // 9. ОБРАБОТКА ПОДТВЕРЖДЕНИЯ / ОТКЛОНЕНИЯ
-        // ============================================================
-        function handleModeration() {
-            const urlParams = new URLSearchParams(window.location.search);
-            const confirmId = urlParams.get('confirm');
-            const rejectId = urlParams.get('reject');
-
-            if (confirmId) {
-                db.collection('ads').doc(confirmId).update({ status: 'published' })
-                    .then(() => {
-                        notify('✅ объявление опубликовано', 'id: ' + confirmId);
-                        window.history.replaceState({}, document.title, window.location.pathname);
-                        loadAllData(true);
-                    })
-                    .catch(() => {
-                        notify('❌ ошибка', 'не удалось подтвердить');
-                    });
-            }
-
-            if (rejectId) {
-                db.collection('ads').doc(rejectId).update({ status: 'rejected' })
-                    .then(() => {
-                        notify('❌ объявление отклонено', 'id: ' + rejectId);
-                        window.history.replaceState({}, document.title, window.location.pathname);
-                        loadAllData(true);
-                    })
-                    .catch(() => {
-                        notify('❌ ошибка', 'не удалось отклонить');
-                    });
-            }
-        }
-
-        // ============================================================
-        // 10. ПРОФИЛЬ
+        // 6. ПРОФИЛЬ
         // ============================================================
         function openProfile(userId) {
             const userData = cache.users[userId] || {};
@@ -1290,7 +1159,7 @@
         }
 
         // ============================================================
-        // 11. РЕДАКТИРОВАНИЕ ПРОФИЛЯ
+        // 7. РЕДАКТИРОВАНИЕ ПРОФИЛЯ
         // ============================================================
         document.getElementById('editProfileBtn').addEventListener('click', function() {
             const userData = cache.users[currentUser] || {};
@@ -1322,8 +1191,66 @@
         });
 
         // ============================================================
-        // 12. ОБЪЯВЛЕНИЯ (УДАЛЕНИЕ, РЕДАКТИРОВАНИЕ)
+        // 8. ОБЪЯВЛЕНИЯ
         // ============================================================
+        document.getElementById('adImage').addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = function(event) {
+                selectedImageData = event.target.result;
+                document.getElementById('adImagePreview').innerHTML = `<img src="${selectedImageData}" class="preview-img" />`;
+                document.getElementById('adImageLabel').textContent = '✅ фото выбрано';
+                document.getElementById('adImageLabel').classList.add('has-file');
+            };
+            reader.readAsDataURL(file);
+        });
+
+        function createAd() {
+            const type = document.getElementById('adType').value;
+            const role = document.getElementById('adRole').value;
+            const engine = document.getElementById('adEngine').value;
+            const title = document.getElementById('adTitle').value.trim();
+            const description = document.getElementById('adDesc').value.trim();
+            const contacts = document.getElementById('adContacts').value.trim();
+            const msg = document.getElementById('adMessage');
+
+            if (!title || !description) { msg.innerText = '❌ заполни всё';
+                msg.className = 'message error'; return; }
+
+            db.collection('ads').add({
+                userId: currentUser,
+                type: type,
+                role: role || 'не указана',
+                engine: engine || 'не указан',
+                title: title,
+                description: description,
+                contacts: contacts || 'не указаны',
+                image: selectedImageData || null,
+                createdAt: new Date().toISOString(),
+                status: 'published',
+                views: 0
+            }).then(() => {
+                selectedImageData = null;
+                document.getElementById('adImagePreview').innerHTML = '';
+                document.getElementById('adImageLabel').textContent = '📷 прикрепить фото';
+                document.getElementById('adImageLabel').classList.remove('has-file');
+                document.getElementById('adImage').value = '';
+                document.getElementById('adTitle').value = '';
+                document.getElementById('adDesc').value = '';
+                document.getElementById('adContacts').value = '';
+                document.getElementById('adRole').value = '';
+                document.getElementById('adEngine').value = '';
+                msg.innerText = '✅ опубликовано!';
+                msg.className = 'message success';
+                notify('📢 объявление создано', title);
+                loadAllData(true);
+            }).catch((error) => {
+                msg.innerText = '❌ ' + error.message;
+                msg.className = 'message error';
+            });
+        }
+
         function deleteAd(adId) {
             if (!confirm('удалить объявление?')) return;
             db.collection('ads').doc(adId).delete()
@@ -1392,7 +1319,7 @@
         });
 
         // ============================================================
-        // 13. КОММЕНТАРИИ
+        // 9. КОММЕНТАРИИ
         // ============================================================
         function addComment(adId) {
             const input = document.getElementById('commentInput_' + adId);
@@ -1440,7 +1367,7 @@
         }
 
         // ============================================================
-        // 14. ИЗБРАННОЕ
+        // 10. ИЗБРАННОЕ
         // ============================================================
         function toggleFav(adId) {
             if (!currentUser) return;
@@ -1467,12 +1394,8 @@
             }
         }
 
-        function isFav(adId) {
-            return cache.favs.includes(adId);
-        }
-
         // ============================================================
-        // 15. ЧАТ
+        // 11. ЧАТ
         // ============================================================
         function openChat(partnerId) {
             currentChatPartner = partnerId;
@@ -1555,8 +1478,12 @@
         document.getElementById('chatBackBtn').addEventListener('click', closeChat);
 
         // ============================================================
-        // 16. ОТРИСОВКА
+        // 12. ФИЛЬТРЫ И ОТРИСОВКА
         // ============================================================
+        function applyFilters() {
+            renderAll();
+        }
+
         function renderAdsList(containerId, filterType, roleFilterId, engineFilterId, searchInputId, favMode) {
             const container = document.getElementById(containerId);
             const roleFilter = document.getElementById(roleFilterId);
@@ -1582,11 +1509,6 @@
 
             let html = '';
             filtered.forEach(ad => {
-                if (ad.userId !== currentUser) {
-                    const views = (ad.views || 0) + 1;
-                    db.collection('ads').doc(ad.id).update({ views: views }).catch(() => {});
-                }
-
                 const badge = ad.type === 'team' ? '<span class="type-badge badge-team">🔍 ищу команду</span>' :
                     '<span class="type-badge badge-work">💼 ищу работу</span>';
                 const isOwn = ad.userId === currentUser;
@@ -1598,7 +1520,7 @@
                         <div class="glass-card" id="ad-${ad.id}">
                             ${badge}
                             <div class="card-title">${ad.title}</div>
-                            <div class="card-tags">🎮 ${ad.role} · ⚙️ ${ad.engine} · ${timeAgo(ad.createdAt)} <span class="views">👁️ ${ad.views || 0}</span></div>
+                            <div class="card-tags">🎮 ${ad.role} · ⚙️ ${ad.engine} · ${timeAgo(ad.createdAt)}</div>
                             <div class="card-desc">${ad.description}</div>
                             ${ad.image ? `<img src="${ad.image}" class="card-img" />` : ''}
                             <div class="card-contacts">
@@ -1628,7 +1550,7 @@
         }
 
         // ============================================================
-        // 17. ВКЛАДКИ
+        // 13. ВКЛАДКИ
         // ============================================================
         document.getElementById('tabButtons').addEventListener('click', function(e) {
             const btn = e.target.closest('.tab-btn');
@@ -1638,29 +1560,38 @@
             const tabId = btn.dataset.tab;
             document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
             document.getElementById('tab' + tabId.charAt(0).toUpperCase() + tabId.slice(1)).classList.add('active');
+            // При переключении вкладки не обновляем данные — используем кеш
         });
 
         document.getElementById('profileBackBtn').addEventListener('click', closeProfile);
         document.getElementById('registerBtn').addEventListener('click', registerUser);
         document.getElementById('loginBtn').addEventListener('click', loginUser);
         document.getElementById('logoutBtn').addEventListener('click', logoutUser);
+        document.getElementById('publishBtn').addEventListener('click', createAd);
 
+        // Кнопка обновления
+        document.getElementById('refreshBtn').addEventListener('click', function() {
+            loadAllData(true);
+            notify('🔄 обновлено', 'данные загружены');
+        });
+
+        // Фильтры — только рендер, без загрузки
         document.getElementById('filterRole').addEventListener('change', renderAll);
         document.getElementById('filterEngine').addEventListener('change', renderAll);
         document.getElementById('filterWorkRole').addEventListener('change', renderAll);
         document.getElementById('filterWorkEngine').addEventListener('change', renderAll);
 
         // ============================================================
-        // 18. КНОПКА ПУБЛИКАЦИИ И ОБРАБОТЧИК
+        // 14. АВТООБНОВЛЕНИЕ РАЗ В МИНУТУ
         // ============================================================
-        document.getElementById('publishBtn').addEventListener('click', createAdWithModeration);
-
-        document.addEventListener('DOMContentLoaded', function() {
-            handleModeration();
-        });
+        setInterval(() => {
+            if (currentUser) {
+                loadAllData(false);
+            }
+        }, 60000); // 1 минута
 
         // ============================================================
-        // 19. АВТО-ВХОД
+        // 15. АВТО-ВХОД
         // ============================================================
         auth.onAuthStateChanged((user) => {
             if (user) {
@@ -1681,12 +1612,6 @@
                 }
             }
         });
-
-        setInterval(() => {
-            if (currentUser) {
-                loadAllData(false);
-            }
-        }, 15000);
     </script>
 </body>
 </html>
