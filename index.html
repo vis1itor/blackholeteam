@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Black Hole — оптимизированная версия</title>
+    <title>Black Hole — с модерацией</title>
 
     <!-- FIREBASE SDK -->
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js">
@@ -14,7 +14,7 @@
     </script>
 
     <style>
-        /* ===== СТИЛИ (ТЕ ЖЕ) ===== */
+        /* ===== СТИЛИ (КОРОТКАЯ ВЕРСИЯ) ===== */
         * {
             margin: 0;
             padding: 0;
@@ -708,7 +708,7 @@
                 <div id="searchResults"></div>
             </div>
 
-            <!-- СОЗДАТЬ -->
+            <!-- СОЗДАТЬ (С МОДЕРАЦИЕЙ) -->
             <div class="tab-content" id="tabCreate">
                 <h3 style="color:rgba(255,255,255,0.6);font-weight:400;font-size:1em;margin-bottom:12px;">создать объявление</h3>
                 <select class="glass-input" id="adType">
@@ -742,7 +742,7 @@
                     <div id="adImagePreview"></div>
                 </div>
 
-                <button class="glass-btn btn-gold" id="publishBtn">опубликовать</button>
+                <button class="glass-btn btn-gold" id="publishBtn">отправить на модерацию</button>
                 <div id="adMessage" class="message"></div>
             </div>
 
@@ -830,7 +830,7 @@
 
     <script>
         // ============================================================
-        // 1. НАСТРОЙКИ FIREBASE
+        // 1. FIREBASE
         // ============================================================
         const firebaseConfig = {
             apiKey: "AIzaSyC6J2lDt-ia1yQqrMoJ7OF7tQMJ0jNNmRo",
@@ -841,12 +841,15 @@
             appId: "1:560063023296:web:7c3da86d7776b6f0800525"
         };
 
-        // ============================================================
-        // 2. ИНИЦИАЛИЗАЦИЯ
-        // ============================================================
         firebase.initializeApp(firebaseConfig);
         const auth = firebase.auth();
         const db = firebase.firestore();
+
+        // ============================================================
+        // 2. UNISENDER (ТВОЙ КЛЮЧ)
+        // ============================================================
+        const UNISENDER_API_KEY = '67m4uoowj5ig1ob3irjwfrtcws6hyfere47nwgpa';
+        const YOUR_EMAIL = 'voyadgersovsemodin@gmail.com';
 
         // ============================================================
         // 3. ПЕРЕМЕННЫЕ
@@ -857,7 +860,6 @@
         let editingAdId = null;
         let selectedImageData = null;
 
-        // ===== КЕШ (данные хранятся здесь, чтобы не ходить в Firebase каждый раз) =====
         let cache = {
             ads: [],
             users: {},
@@ -909,22 +911,24 @@
         }
 
         // ============================================================
-        // 5. ЗАГРУЗКА ДАННЫХ С КЕШЕМ
+        // 5. ЗАГРУЗКА ДАННЫХ (ТОЛЬКО ОПУБЛИКОВАННЫЕ)
         // ============================================================
         function loadAllData(force = false) {
             const now = Date.now();
-            // Если прошло меньше 10 секунд и не force — используем кеш
             if (!force && cache.lastUpdate > 0 && (now - cache.lastUpdate) < 10000) {
                 renderAll();
                 return;
             }
 
-            // Загружаем объявления
             db.collection('ads').get()
                 .then((snapshot) => {
                     cache.ads = [];
                     snapshot.forEach(doc => {
-                        cache.ads.push({ id: doc.id, ...doc.data() });
+                        const data = doc.data();
+                        // Показываем только опубликованные объявления
+                        if (data.status === 'published' || !data.status) {
+                            cache.ads.push({ id: doc.id, ...data });
+                        }
                     });
                     cache.ads.sort((a, b) => {
                         if (a.createdAt < b.createdAt) return 1;
@@ -934,13 +938,8 @@
                     cache.lastUpdate = Date.now();
                     renderAll();
                 })
-                .catch((error) => {
-                    console.error('Ошибка загрузки объявлений:', error);
-                    // Если ошибка — всё равно показываем кеш
-                    renderAll();
-                });
+                .catch(() => renderAll());
 
-            // Загружаем пользователей
             db.collection('users').get()
                 .then((snapshot) => {
                     cache.users = {};
@@ -951,7 +950,6 @@
                 })
                 .catch(() => {});
 
-            // Загружаем избранное
             if (currentUser) {
                 db.collection('favorites')
                     .where('userId', '==', currentUser)
@@ -964,10 +962,7 @@
                         renderAll();
                     })
                     .catch(() => {});
-            }
 
-            // Загружаем чаты
-            if (currentUser) {
                 db.collection('chats')
                     .where('participants', 'array-contains', currentUser)
                     .get()
@@ -979,28 +974,26 @@
                         renderAll();
                     })
                     .catch(() => {});
-            }
 
-            // Загружаем комментарии для всех объявлений (один запрос)
-            db.collection('comments').get()
-                .then((snapshot) => {
-                    cache.comments = {};
-                    snapshot.forEach(doc => {
-                        const data = doc.data();
-                        if (!cache.comments[data.adId]) cache.comments[data.adId] = [];
-                        cache.comments[data.adId].push({ id: doc.id, ...data });
-                    });
-                    // Сортируем комментарии по дате
-                    for (const key in cache.comments) {
-                        cache.comments[key].sort((a, b) => {
-                            if (a.createdAt < b.createdAt) return -1;
-                            if (a.createdAt > b.createdAt) return 1;
-                            return 0;
+                db.collection('comments').get()
+                    .then((snapshot) => {
+                        cache.comments = {};
+                        snapshot.forEach(doc => {
+                            const data = doc.data();
+                            if (!cache.comments[data.adId]) cache.comments[data.adId] = [];
+                            cache.comments[data.adId].push({ id: doc.id, ...data });
                         });
-                    }
-                    renderAll();
-                })
-                .catch(() => {});
+                        for (const key in cache.comments) {
+                            cache.comments[key].sort((a, b) => {
+                                if (a.createdAt < b.createdAt) return -1;
+                                if (a.createdAt > b.createdAt) return 1;
+                                return 0;
+                            });
+                        }
+                        renderAll();
+                    })
+                    .catch(() => {});
+            }
         }
 
         // ============================================================
@@ -1018,7 +1011,6 @@
             document.getElementById('tabSearch').classList.add('active');
             document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
             document.querySelector('.tab-btn[data-tab="search"]').classList.add('active');
-
             loadAllData(true);
         }
 
@@ -1093,7 +1085,157 @@
         }
 
         // ============================================================
-        // 7. ПРОФИЛЬ
+        // 7. ОТПРАВКА ПИСЬМА ЧЕРЕЗ UNISENDER
+        // ============================================================
+        function sendEmail(subject, htmlBody) {
+            return new Promise((resolve, reject) => {
+                const url = 'https://api.unisender.com/ru/api/sendEmail';
+
+                const params = new URLSearchParams();
+                params.append('api_key', UNISENDER_API_KEY);
+                params.append('email', YOUR_EMAIL);
+                params.append('sender_email', YOUR_EMAIL);
+                params.append('sender_name', 'Black Hole Moderation');
+                params.append('subject', subject);
+                params.append('body', htmlBody);
+                params.append('list_id', '1');
+
+                fetch(url, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded'
+                    },
+                    body: params
+                })
+                .then(response => response.json())
+                .then(result => {
+                    if (result.result && result.result.email_id) {
+                        resolve();
+                    } else {
+                        reject(new Error(result.error || 'Ошибка отправки письма'));
+                    }
+                })
+                .catch(reject);
+            });
+        }
+
+        // ============================================================
+        // 8. СОЗДАНИЕ ОБЪЯВЛЕНИЯ С МОДЕРАЦИЕЙ
+        // ============================================================
+        function createAdWithModeration() {
+            const type = document.getElementById('adType').value;
+            const role = document.getElementById('adRole').value;
+            const engine = document.getElementById('adEngine').value;
+            const title = document.getElementById('adTitle').value.trim();
+            const description = document.getElementById('adDesc').value.trim();
+            const contacts = document.getElementById('adContacts').value.trim();
+            const msg = document.getElementById('adMessage');
+
+            if (!title || !description) {
+                msg.innerText = '❌ заполни всё';
+                msg.className = 'message error';
+                return;
+            }
+
+            const adData = {
+                userId: currentUser,
+                type: type,
+                role: role || 'не указана',
+                engine: engine || 'не указан',
+                title: title,
+                description: description,
+                contacts: contacts || 'не указаны',
+                image: selectedImageData || null,
+                createdAt: new Date().toISOString(),
+                status: 'pending',
+                views: 0
+            };
+
+            db.collection('ads').add(adData)
+                .then((docRef) => {
+                    const adId = docRef.id;
+
+                    const confirmLink = `https://vis1itor.github.io/blackholeteam/?confirm=${adId}`;
+                    const rejectLink = `https://vis1itor.github.io/blackholeteam/?reject=${adId}`;
+
+                    const htmlBody = `
+                        <h2>📢 Новое объявление на модерацию</h2>
+                        <p><strong>ID:</strong> ${adId}</p>
+                        <p><strong>Автор:</strong> ${currentUserEmail || currentUser}</p>
+                        <p><strong>Заголовок:</strong> ${title}</p>
+                        <p><strong>Описание:</strong> ${description}</p>
+                        <p><strong>Роль:</strong> ${role || 'не указана'}</p>
+                        <p><strong>Движок:</strong> ${engine || 'не указан'}</p>
+                        <p><strong>Контакты:</strong> ${contacts || 'не указаны'}</p>
+                        <hr>
+                        <a href="${confirmLink}" style="background:#f0b800;color:#0a0a0f;padding:10px 20px;border-radius:8px;text-decoration:none;font-weight:bold;display:inline-block;margin:5px;">
+                            ✅ ПОДТВЕРДИТЬ
+                        </a>
+                        <a href="${rejectLink}" style="background:#ff4444;color:#fff;padding:10px 20px;border-radius:8px;text-decoration:none;font-weight:bold;display:inline-block;margin:5px;">
+                            ❌ ОТКЛОНИТЬ
+                        </a>
+                    `;
+
+                    return sendEmail('📢 Новое объявление на модерацию', htmlBody)
+                        .then(() => adId);
+                })
+                .then((adId) => {
+                    selectedImageData = null;
+                    document.getElementById('adImagePreview').innerHTML = '';
+                    document.getElementById('adImageLabel').textContent = '📷 прикрепить фото';
+                    document.getElementById('adImageLabel').classList.remove('has-file');
+                    document.getElementById('adImage').value = '';
+                    document.getElementById('adTitle').value = '';
+                    document.getElementById('adDesc').value = '';
+                    document.getElementById('adContacts').value = '';
+                    document.getElementById('adRole').value = '';
+                    document.getElementById('adEngine').value = '';
+
+                    msg.innerText = '✅ Отправлено на модерацию! Проверь почту.';
+                    msg.className = 'message success';
+                    notify('📨 отправлено', 'объявление ждёт подтверждения');
+                })
+                .catch((error) => {
+                    msg.innerText = '❌ ' + error.message;
+                    msg.className = 'message error';
+                });
+        }
+
+        // ============================================================
+        // 9. ОБРАБОТКА ПОДТВЕРЖДЕНИЯ / ОТКЛОНЕНИЯ
+        // ============================================================
+        function handleModeration() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const confirmId = urlParams.get('confirm');
+            const rejectId = urlParams.get('reject');
+
+            if (confirmId) {
+                db.collection('ads').doc(confirmId).update({ status: 'published' })
+                    .then(() => {
+                        notify('✅ объявление опубликовано', 'id: ' + confirmId);
+                        window.history.replaceState({}, document.title, window.location.pathname);
+                        loadAllData(true);
+                    })
+                    .catch(() => {
+                        notify('❌ ошибка', 'не удалось подтвердить');
+                    });
+            }
+
+            if (rejectId) {
+                db.collection('ads').doc(rejectId).update({ status: 'rejected' })
+                    .then(() => {
+                        notify('❌ объявление отклонено', 'id: ' + rejectId);
+                        window.history.replaceState({}, document.title, window.location.pathname);
+                        loadAllData(true);
+                    })
+                    .catch(() => {
+                        notify('❌ ошибка', 'не удалось отклонить');
+                    });
+            }
+        }
+
+        // ============================================================
+        // 10. ПРОФИЛЬ
         // ============================================================
         function openProfile(userId) {
             const userData = cache.users[userId] || {};
@@ -1148,7 +1290,7 @@
         }
 
         // ============================================================
-        // 8. РЕДАКТИРОВАНИЕ ПРОФИЛЯ
+        // 11. РЕДАКТИРОВАНИЕ ПРОФИЛЯ
         // ============================================================
         document.getElementById('editProfileBtn').addEventListener('click', function() {
             const userData = cache.users[currentUser] || {};
@@ -1180,65 +1322,8 @@
         });
 
         // ============================================================
-        // 9. ОБЪЯВЛЕНИЯ
+        // 12. ОБЪЯВЛЕНИЯ (УДАЛЕНИЕ, РЕДАКТИРОВАНИЕ)
         // ============================================================
-        document.getElementById('adImage').addEventListener('change', function(e) {
-            const file = e.target.files[0];
-            if (!file) return;
-            const reader = new FileReader();
-            reader.onload = function(event) {
-                selectedImageData = event.target.result;
-                document.getElementById('adImagePreview').innerHTML = `<img src="${selectedImageData}" class="preview-img" />`;
-                document.getElementById('adImageLabel').textContent = '✅ фото выбрано';
-                document.getElementById('adImageLabel').classList.add('has-file');
-            };
-            reader.readAsDataURL(file);
-        });
-
-        function createAd() {
-            const type = document.getElementById('adType').value;
-            const role = document.getElementById('adRole').value;
-            const engine = document.getElementById('adEngine').value;
-            const title = document.getElementById('adTitle').value.trim();
-            const description = document.getElementById('adDesc').value.trim();
-            const contacts = document.getElementById('adContacts').value.trim();
-            const msg = document.getElementById('adMessage');
-
-            if (!title || !description) { msg.innerText = '❌ заполни всё';
-                msg.className = 'message error'; return; }
-
-            db.collection('ads').add({
-                userId: currentUser,
-                type: type,
-                role: role || 'не указана',
-                engine: engine || 'не указан',
-                title: title,
-                description: description,
-                contacts: contacts || 'не указаны',
-                image: selectedImageData || null,
-                createdAt: new Date().toISOString(),
-                views: 0
-            }).then(() => {
-                selectedImageData = null;
-                document.getElementById('adImagePreview').innerHTML = '';
-                document.getElementById('adImageLabel').textContent = '📷 прикрепить фото';
-                document.getElementById('adImageLabel').classList.remove('has-file');
-                document.getElementById('adImage').value = '';
-                document.getElementById('adTitle').value = '';
-                document.getElementById('adDesc').value = '';
-                document.getElementById('adContacts').value = '';
-                document.getElementById('adRole').value = '';
-                document.getElementById('adEngine').value = '';
-                msg.innerText = '✅ опубликовано!';
-                msg.className = 'message success';
-                notify('📢 объявление создано', title);
-                loadAllData(true);
-            }).catch((error) => {
-                msg.innerText = '❌ ' + error.message;
-                msg.className = 'message error';
-            });
-        }
-
         function deleteAd(adId) {
             if (!confirm('удалить объявление?')) return;
             db.collection('ads').doc(adId).delete()
@@ -1307,7 +1392,7 @@
         });
 
         // ============================================================
-        // 10. КОММЕНТАРИИ
+        // 13. КОММЕНТАРИИ
         // ============================================================
         function addComment(adId) {
             const input = document.getElementById('commentInput_' + adId);
@@ -1355,7 +1440,7 @@
         }
 
         // ============================================================
-        // 11. ИЗБРАННОЕ
+        // 14. ИЗБРАННОЕ
         // ============================================================
         function toggleFav(adId) {
             if (!currentUser) return;
@@ -1387,7 +1472,7 @@
         }
 
         // ============================================================
-        // 12. ЧАТ
+        // 15. ЧАТ
         // ============================================================
         function openChat(partnerId) {
             currentChatPartner = partnerId;
@@ -1470,7 +1555,7 @@
         document.getElementById('chatBackBtn').addEventListener('click', closeChat);
 
         // ============================================================
-        // 13. ОТРИСОВКА
+        // 16. ОТРИСОВКА
         // ============================================================
         function renderAdsList(containerId, filterType, roleFilterId, engineFilterId, searchInputId, favMode) {
             const container = document.getElementById(containerId);
@@ -1497,7 +1582,6 @@
 
             let html = '';
             filtered.forEach(ad => {
-                // Увеличиваем просмотры (раз в 10 секунд, чтобы не спамить)
                 if (ad.userId !== currentUser) {
                     const views = (ad.views || 0) + 1;
                     db.collection('ads').doc(ad.id).update({ views: views }).catch(() => {});
@@ -1544,7 +1628,7 @@
         }
 
         // ============================================================
-        // 14. ВКЛАДКИ
+        // 17. ВКЛАДКИ
         // ============================================================
         document.getElementById('tabButtons').addEventListener('click', function(e) {
             const btn = e.target.closest('.tab-btn');
@@ -1560,7 +1644,6 @@
         document.getElementById('registerBtn').addEventListener('click', registerUser);
         document.getElementById('loginBtn').addEventListener('click', loginUser);
         document.getElementById('logoutBtn').addEventListener('click', logoutUser);
-        document.getElementById('publishBtn').addEventListener('click', createAd);
 
         document.getElementById('filterRole').addEventListener('change', renderAll);
         document.getElementById('filterEngine').addEventListener('change', renderAll);
@@ -1568,7 +1651,16 @@
         document.getElementById('filterWorkEngine').addEventListener('change', renderAll);
 
         // ============================================================
-        // 15. АВТО-ВХОД И ОБНОВЛЕНИЕ КЕША КАЖДЫЕ 10 СЕКУНД
+        // 18. КНОПКА ПУБЛИКАЦИИ И ОБРАБОТЧИК
+        // ============================================================
+        document.getElementById('publishBtn').addEventListener('click', createAdWithModeration);
+
+        document.addEventListener('DOMContentLoaded', function() {
+            handleModeration();
+        });
+
+        // ============================================================
+        // 19. АВТО-ВХОД
         // ============================================================
         auth.onAuthStateChanged((user) => {
             if (user) {
@@ -1590,18 +1682,11 @@
             }
         });
 
-        // Автообновление кеша каждые 10 секунд (без перегрузки Firebase)
         setInterval(() => {
             if (currentUser) {
                 loadAllData(false);
             }
-        }, 10000);
-
-        // Если уже есть сохранённый пользователь
-        const savedUser = localStorage.getItem('currentUser');
-        if (savedUser && !currentUser) {
-            // Ждём onAuthStateChanged
-        }
+        }, 15000);
     </script>
 </body>
 </html>
