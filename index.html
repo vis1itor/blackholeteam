@@ -3,7 +3,18 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Nebula — из хаоса рождаются звёзды</title>
+
+    <!-- ===== МЕТА-ТЕГИ ДЛЯ ПОИСКОВИКОВ ===== -->
+    <title>Nebula — платформа для поиска команды в геймдеве</title>
+    <meta name="description" content="Nebula — находи команду, студии и разработчиков для игр. Создавай проекты, общайся и развивайся в геймдеве." />
+    <meta name="keywords" content="поиск команды, геймдев, разработка игр, студия, Nebula, найти разработчиков, геймдизайн, инди-игры" />
+    <link rel="canonical" href="https://vis1itor.github.io/nebula/" />
+
+    <!-- ===== ОТКРЫТЫЕ ГРАФЫ (ДЛЯ СОЦСЕТЕЙ) ===== -->
+    <meta property="og:title" content="Nebula — платформа для поиска команды в геймдеве" />
+    <meta property="og:description" content="Находи команду, студии и разработчиков для игр. Создавай проекты, общайся и развивайся в геймдеве." />
+    <meta property="og:url" content="https://vis1itor.github.io/nebula/" />
+    <meta property="og:type" content="website" />
 
     <!-- ===== ШРИФТ DELA GOTHIC ONE ===== -->
     <link href="https://fonts.googleapis.com/css2?family=Dela+Gothic+One&display=swap" rel="stylesheet">
@@ -992,7 +1003,7 @@
                     <option>не важно</option>
                 </select>
                 <input class="glass-input" type="text" id="adTitle" placeholder="заголовок" />
-                <textarea class="glass-input" id="adDesc" rows="3" placeholder="опиши проект..."></textarea>
+                <textarea class="glass-input" id="adDesc" rows="3" placeholder="опиши проект..." />
                 <input class="glass-input" type="text" id="adContacts" placeholder="контакты (telegram/discord)" />
 
                 <div class="file-input-wrapper">
@@ -1090,7 +1101,7 @@
                 <div class="edit-form">
                     <h4 style="color:#00D4FF;font-family:'Dela Gothic One',cursive;font-weight:400;letter-spacing:1px;">редактировать объявление</h4>
                     <input class="glass-input" type="text" id="editAdTitle" placeholder="заголовок" />
-                    <textarea class="glass-input" id="editAdDesc" rows="3" placeholder="описание"></textarea>
+                    <textarea class="glass-input" id="editAdDesc" rows="3" placeholder="описание" />
                     <input class="glass-input" type="text" id="editAdContacts" placeholder="контакты" />
                     <button class="glass-btn btn-cyan" id="saveAdEditBtn">сохранить</button>
                     <button class="glass-btn btn-ghost" id="cancelAdEditBtn">отмена</button>
@@ -1294,22 +1305,23 @@
             if (!container) return;
 
             if (cache.studios.length === 0) {
-                container.innerHTML = '<div style="color:rgba(224,244,255,0.15);font-family:Segoe UI,system-ui;text-align:center;padding:20px 0;grid-column:1/-1;">вы не состоите в студиях</div>';
+                container.innerHTML =
+                    '<div style="color:rgba(224,244,255,0.15);font-family:Segoe UI,system-ui;text-align:center;padding:20px 0;grid-column:1/-1;">вы не состоите в студиях</div>';
                 return;
             }
 
             let html = '';
             cache.studios.forEach(studio => {
                 html += `
-                    <div class="glass-card">
-                        <div class="card-title">${studio.name}</div>
-                        <div class="card-tags">🏷️ ${studio.studioId} · 👥 ${studio.members ? studio.members.length : 1}</div>
-                        <div class="card-actions" style="margin-top:8px;">
-                            <button class="btn-small btn-chat" onclick="inviteToStudio('${studio.id}')">➕ пригласить</button>
-                            <button class="btn-small btn-edit" onclick="viewStudio('${studio.id}')">👁️</button>
+                        <div class="glass-card">
+                            <div class="card-title">${studio.name}</div>
+                            <div class="card-tags">🏷️ ${studio.studioId} · 👥 ${studio.members ? studio.members.length : 1}</div>
+                            <div class="card-actions" style="margin-top:8px;">
+                                <button class="btn-small btn-chat" onclick="inviteToStudio('${studio.id}')">➕ пригласить</button>
+                                <button class="btn-small btn-edit" onclick="viewStudio('${studio.id}')">👁️</button>
+                            </div>
                         </div>
-                    </div>
-                `;
+                    `;
             });
             container.innerHTML = html;
         }
@@ -1370,22 +1382,23 @@
             if (!container) return;
 
             if (cache.resumes.length === 0) {
-                container.innerHTML = '<div style="color:rgba(224,244,255,0.15);font-family:Segoe UI,system-ui;text-align:center;padding:20px 0;">у вас нет резюме</div>';
+                container.innerHTML =
+                    '<div style="color:rgba(224,244,255,0.15);font-family:Segoe UI,system-ui;text-align:center;padding:20px 0;">у вас нет резюме</div>';
                 return;
             }
 
             let html = '';
             cache.resumes.forEach(resume => {
                 html += `
-                    <div class="resume-card">
-                        <div class="resume-title">${resume.title}</div>
-                        <div class="resume-meta">📅 ${timeAgo(resume.createdAt)}</div>
-                        <div class="resume-text">${resume.description}</div>
-                        <div style="margin-top:6px;">
-                            <button class="btn-small btn-delete" onclick="deleteResume('${resume.id}')">🗑️ удалить</button>
+                        <div class="resume-card">
+                            <div class="resume-title">${resume.title}</div>
+                            <div class="resume-meta">📅 ${timeAgo(resume.createdAt)}</div>
+                            <div class="resume-text">${resume.description}</div>
+                            <div style="margin-top:6px;">
+                                <button class="btn-small btn-delete" onclick="deleteResume('${resume.id}')">🗑️ удалить</button>
+                            </div>
                         </div>
-                    </div>
-                `;
+                    `;
             });
             container.innerHTML = html;
         }
@@ -1599,21 +1612,22 @@
 
             const container = document.getElementById('profileAds');
             if (ads.length === 0) {
-                container.innerHTML = '<div style="color:rgba(224,244,255,0.15);padding:8px 0;font-family:Segoe UI,system-ui;grid-column:1/-1;text-align:center;">нет объявлений</div>';
+                container.innerHTML =
+                    '<div style="color:rgba(224,244,255,0.15);padding:8px 0;font-family:Segoe UI,system-ui;grid-column:1/-1;text-align:center;">нет объявлений</div>';
             } else {
                 let html = '';
                 ads.forEach(ad => {
                     const badge = ad.type === 'team' ? '<span class="type-badge badge-team">команда</span>' :
                         '<span class="type-badge badge-work">работа</span>';
                     html += `
-                        <div class="glass-card" style="margin:0;cursor:default;">
-                            ${badge}
-                            <div class="card-title" style="font-size:0.9em;">${ad.title}</div>
-                            <div class="card-tags">🎮 ${ad.role} · ⚙️ ${ad.engine}</div>
-                            <div class="card-desc" style="font-size:0.8em;">${ad.description}</div>
-                            ${ad.image ? `<img src="${ad.image}" class="card-img" />` : ''}
-                        </div>
-                    `;
+                            <div class="glass-card" style="margin:0;cursor:default;">
+                                ${badge}
+                                <div class="card-title" style="font-size:0.9em;">${ad.title}</div>
+                                <div class="card-tags">🎮 ${ad.role} · ⚙️ ${ad.engine}</div>
+                                <div class="card-desc" style="font-size:0.8em;">${ad.description}</div>
+                                ${ad.image ? `<img src="${ad.image}" class="card-img" />` : ''}
+                            </div>
+                        `;
                 });
                 container.innerHTML = html;
             }
@@ -1827,19 +1841,19 @@
                 const userData = cache.users[c.userId] || {};
                 const author = userData.email || c.userId;
                 html += `
-                    <div class="comment">
-                        <span class="c-author">${author}</span>
-                        <span class="c-time">${timeAgo(c.createdAt)}</span>
-                        ${c.text}
-                    </div>
-                `;
+                        <div class="comment">
+                            <span class="c-author">${author}</span>
+                            <span class="c-time">${timeAgo(c.createdAt)}</span>
+                            ${c.text}
+                        </div>
+                    `;
             });
             html += `
-                <div class="comment-input-row">
-                    <input type="text" id="commentInput_${adId}" placeholder="написать комментарий..." />
-                    <button onclick="addComment('${adId}')">→</button>
+                    <div class="comment-input-row">
+                        <input type="text" id="commentInput_${adId}" placeholder="написать комментарий..." />
+                        <button onclick="addComment('${adId}')">→</button>
+                    </div>
                 </div>
-            </div>
             `;
             return html;
         }
@@ -1914,12 +1928,12 @@
                 const isMe = m.sender === currentUser;
                 const senderName = cache.users[m.sender]?.email || m.sender;
                 html += `
-                    <div class="msg" style="text-align:${isMe ? 'right' : 'left'};background:${isMe ? 'rgba(0,180,255,0.05)' : 'rgba(255,255,255,0.02)'};">
-                        <span class="sender">${isMe ? 'я' : senderName}</span>
-                        <span class="time">${timeAgo(m.time)}</span>
-                        <div>${m.text}</div>
-                    </div>
-                `;
+                        <div class="msg" style="text-align:${isMe ? 'right' : 'left'};background:${isMe ? 'rgba(0,180,255,0.05)' : 'rgba(255,255,255,0.02)'};">
+                            <span class="sender">${isMe ? 'я' : senderName}</span>
+                            <span class="time">${timeAgo(m.time)}</span>
+                            <div>${m.text}</div>
+                        </div>
+                    `;
             });
             container.innerHTML = html;
             container.scrollTop = container.scrollHeight;
@@ -1995,28 +2009,28 @@
                 const authorEmail = userData.email || ad.userId;
 
                 html += `
-                    <div class="glass-card" id="ad-${ad.id}">
-                        ${badge}
-                        <div class="card-title">${ad.title}</div>
-                        <div class="card-tags">🎮 ${ad.role} · ⚙️ ${ad.engine} · ${timeAgo(ad.createdAt)}</div>
-                        <div class="card-desc">${ad.description}</div>
-                        ${ad.image ? `<img src="${ad.image}" class="card-img" />` : ''}
-                        <div class="card-contacts">
-                            📱 ${ad.contacts}
-                            <span class="clickable-author" onclick="openProfile('${ad.userId}')">· ✉️ ${authorEmail}</span>
+                        <div class="glass-card" id="ad-${ad.id}">
+                            ${badge}
+                            <div class="card-title">${ad.title}</div>
+                            <div class="card-tags">🎮 ${ad.role} · ⚙️ ${ad.engine} · ${timeAgo(ad.createdAt)}</div>
+                            <div class="card-desc">${ad.description}</div>
+                            ${ad.image ? `<img src="${ad.image}" class="card-img" />` : ''}
+                            <div class="card-contacts">
+                                📱 ${ad.contacts}
+                                <span class="clickable-author" onclick="openProfile('${ad.userId}')">· ✉️ ${authorEmail}</span>
+                            </div>
+                            <div class="card-actions">
+                                <button class="btn-small btn-fav ${isFav(ad.id)?'active':''}" onclick="toggleFav('${ad.id}')">${isFav(ad.id)?'★':'☆'}</button>
+                                ${isOwn ? `
+                                    <button class="btn-small btn-edit" onclick="startEditAd('${ad.id}')">✏️</button>
+                                    <button class="btn-small btn-delete" onclick="deleteAd('${ad.id}')">🗑️</button>
+                                ` : `
+                                    <button class="btn-small btn-chat" onclick="openChat('${ad.userId}')">💬</button>
+                                `}
+                            </div>
+                            ${commentsHtml}
                         </div>
-                        <div class="card-actions">
-                            <button class="btn-small btn-fav ${isFav(ad.id)?'active':''}" onclick="toggleFav('${ad.id}')">${isFav(ad.id)?'★':'☆'}</button>
-                            ${isOwn ? `
-                                <button class="btn-small btn-edit" onclick="startEditAd('${ad.id}')">✏️</button>
-                                <button class="btn-small btn-delete" onclick="deleteAd('${ad.id}')">🗑️</button>
-                            ` : `
-                                <button class="btn-small btn-chat" onclick="openChat('${ad.userId}')">💬</button>
-                            `}
-                        </div>
-                        ${commentsHtml}
-                    </div>
-                `;
+                    `;
             });
             container.innerHTML = html;
         }
