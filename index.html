@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Black Hole — упрощённая версия</title>
+    <title>Black Hole — оптимизированная версия</title>
 
     <!-- FIREBASE SDK -->
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js">
@@ -14,6 +14,7 @@
     </script>
 
     <style>
+        /* ===== СТИЛИ (ТЕ ЖЕ) ===== */
         * {
             margin: 0;
             padding: 0;
@@ -855,11 +856,16 @@
         let currentChatPartner = null;
         let editingAdId = null;
         let selectedImageData = null;
-        let allAds = [];
-        let allUsers = {};
-        let allFavs = [];
-        let allChats = {};
-        let allComments = {};
+
+        // ===== КЕШ (данные хранятся здесь, чтобы не ходить в Firebase каждый раз) =====
+        let cache = {
+            ads: [],
+            users: {},
+            favs: [],
+            chats: {},
+            comments: {},
+            lastUpdate: 0
+        };
 
         // ============================================================
         // 4. ВСПОМОГАТЕЛЬНЫЕ
@@ -903,92 +909,98 @@
         }
 
         // ============================================================
-        // 5. ЗАГРУЗКА ДАННЫХ (БЕЗ СОРТИРОВКИ)
+        // 5. ЗАГРУЗКА ДАННЫХ С КЕШЕМ
         // ============================================================
-        function loadAds() {
-            db.collection('ads')
-                .get()
+        function loadAllData(force = false) {
+            const now = Date.now();
+            // Если прошло меньше 10 секунд и не force — используем кеш
+            if (!force && cache.lastUpdate > 0 && (now - cache.lastUpdate) < 10000) {
+                renderAll();
+                return;
+            }
+
+            // Загружаем объявления
+            db.collection('ads').get()
                 .then((snapshot) => {
-                    allAds = [];
+                    cache.ads = [];
                     snapshot.forEach(doc => {
-                        allAds.push({ id: doc.id, ...doc.data() });
+                        cache.ads.push({ id: doc.id, ...doc.data() });
                     });
-                    // Сортируем вручную
-                    allAds.sort((a, b) => {
+                    cache.ads.sort((a, b) => {
                         if (a.createdAt < b.createdAt) return 1;
                         if (a.createdAt > b.createdAt) return -1;
                         return 0;
                     });
+                    cache.lastUpdate = Date.now();
                     renderAll();
                 })
                 .catch((error) => {
                     console.error('Ошибка загрузки объявлений:', error);
+                    // Если ошибка — всё равно показываем кеш
+                    renderAll();
                 });
-        }
 
-        function loadUsers() {
-            db.collection('users')
-                .get()
+            // Загружаем пользователей
+            db.collection('users').get()
                 .then((snapshot) => {
-                    allUsers = {};
+                    cache.users = {};
                     snapshot.forEach(doc => {
-                        allUsers[doc.id] = doc.data();
+                        cache.users[doc.id] = doc.data();
                     });
                     renderAll();
                 })
-                .catch((error) => {
-                    console.error('Ошибка загрузки пользователей:', error);
-                });
-        }
+                .catch(() => {});
 
-        function loadFavorites() {
-            if (!currentUser) return;
-            db.collection('favorites')
-                .where('userId', '==', currentUser)
-                .get()
+            // Загружаем избранное
+            if (currentUser) {
+                db.collection('favorites')
+                    .where('userId', '==', currentUser)
+                    .get()
+                    .then((snapshot) => {
+                        cache.favs = [];
+                        snapshot.forEach(doc => {
+                            cache.favs.push(doc.data().adId);
+                        });
+                        renderAll();
+                    })
+                    .catch(() => {});
+            }
+
+            // Загружаем чаты
+            if (currentUser) {
+                db.collection('chats')
+                    .where('participants', 'array-contains', currentUser)
+                    .get()
+                    .then((snapshot) => {
+                        cache.chats = {};
+                        snapshot.forEach(doc => {
+                            cache.chats[doc.id] = doc.data();
+                        });
+                        renderAll();
+                    })
+                    .catch(() => {});
+            }
+
+            // Загружаем комментарии для всех объявлений (один запрос)
+            db.collection('comments').get()
                 .then((snapshot) => {
-                    allFavs = [];
+                    cache.comments = {};
                     snapshot.forEach(doc => {
-                        allFavs.push(doc.data().adId);
+                        const data = doc.data();
+                        if (!cache.comments[data.adId]) cache.comments[data.adId] = [];
+                        cache.comments[data.adId].push({ id: doc.id, ...data });
                     });
+                    // Сортируем комментарии по дате
+                    for (const key in cache.comments) {
+                        cache.comments[key].sort((a, b) => {
+                            if (a.createdAt < b.createdAt) return -1;
+                            if (a.createdAt > b.createdAt) return 1;
+                            return 0;
+                        });
+                    }
                     renderAll();
                 })
-                .catch((error) => {
-                    console.error('Ошибка загрузки избранного:', error);
-                });
-        }
-
-        function loadChats() {
-            if (!currentUser) return;
-            db.collection('chats')
-                .where('participants', 'array-contains', currentUser)
-                .get()
-                .then((snapshot) => {
-                    allChats = {};
-                    snapshot.forEach(doc => {
-                        allChats[doc.id] = doc.data();
-                    });
-                    renderAll();
-                })
-                .catch((error) => {
-                    console.error('Ошибка загрузки чатов:', error);
-                });
-        }
-
-        function loadCommentsForAd(adId) {
-            db.collection('comments')
-                .where('adId', '==', adId)
-                .get()
-                .then((snapshot) => {
-                    allComments[adId] = [];
-                    snapshot.forEach(doc => {
-                        allComments[adId].push({ id: doc.id, ...doc.data() });
-                    });
-                    renderAll();
-                })
-                .catch((error) => {
-                    console.error('Ошибка загрузки комментариев:', error);
-                });
+                .catch(() => {});
         }
 
         // ============================================================
@@ -1007,10 +1019,7 @@
             document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
             document.querySelector('.tab-btn[data-tab="search"]').classList.add('active');
 
-            loadAds();
-            loadUsers();
-            loadFavorites();
-            loadChats();
+            loadAllData(true);
         }
 
         function registerUser() {
@@ -1077,11 +1086,9 @@
             currentUserEmail = null;
             localStorage.removeItem('currentUser');
             localStorage.removeItem('currentUserEmail');
+            cache.lastUpdate = 0;
             document.getElementById('authBlock').classList.remove('hidden');
             document.getElementById('userBlock').classList.add('hidden');
-            allAds = [];
-            allUsers = {};
-            allFavs = [];
             renderAll();
         }
 
@@ -1089,9 +1096,9 @@
         // 7. ПРОФИЛЬ
         // ============================================================
         function openProfile(userId) {
-            const userData = allUsers[userId] || {};
+            const userData = cache.users[userId] || {};
             const email = userData.email || userId;
-            const ads = allAds.filter(ad => ad.userId === userId);
+            const ads = cache.ads.filter(ad => ad.userId === userId);
 
             document.getElementById('profileAvatar').parentElement.innerHTML = avatarHtml(email) +
                 document.getElementById('profileAvatar').parentElement.innerHTML;
@@ -1144,7 +1151,7 @@
         // 8. РЕДАКТИРОВАНИЕ ПРОФИЛЯ
         // ============================================================
         document.getElementById('editProfileBtn').addEventListener('click', function() {
-            const userData = allUsers[currentUser] || {};
+            const userData = cache.users[currentUser] || {};
             document.getElementById('editRole').value = userData.role || 'не указана';
             document.getElementById('editEngine').value = userData.engine || 'не указан';
             document.getElementById('editBio').value = userData.bio || '';
@@ -1166,7 +1173,7 @@
             }).then(() => {
                 document.getElementById('editProfileForm').classList.add('hidden');
                 notify('✅ профиль обновлён', 'данные сохранены');
-                renderAll();
+                loadAllData(true);
             }).catch((error) => {
                 notify('❌ ошибка', error.message);
             });
@@ -1225,7 +1232,7 @@
                 msg.innerText = '✅ опубликовано!';
                 msg.className = 'message success';
                 notify('📢 объявление создано', title);
-                loadAds();
+                loadAllData(true);
             }).catch((error) => {
                 msg.innerText = '❌ ' + error.message;
                 msg.className = 'message error';
@@ -1237,7 +1244,7 @@
             db.collection('ads').doc(adId).delete()
                 .then(() => {
                     notify('🗑️ удалено', 'объявление удалено');
-                    loadAds();
+                    loadAllData(true);
                 })
                 .catch((error) => {
                     notify('❌ ошибка', error.message);
@@ -1245,7 +1252,7 @@
         }
 
         function startEditAd(adId) {
-            const ad = allAds.find(a => a.id === adId);
+            const ad = cache.ads.find(a => a.id === adId);
             if (!ad) return;
             editingAdId = adId;
             document.getElementById('editAdTitle').value = ad.title;
@@ -1274,7 +1281,7 @@
                 document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
                 document.querySelector('.tab-btn[data-tab="search"]').classList.add('active');
                 notify('✏️ обновлено', 'объявление изменено');
-                loadAds();
+                loadAllData(true);
             }).catch((error) => {
                 notify('❌ ошибка', error.message);
             });
@@ -1315,19 +1322,19 @@
             }).then(() => {
                 input.value = '';
                 notify('💬 комментарий добавлен', text);
-                loadCommentsForAd(adId);
+                loadAllData(true);
             }).catch((error) => {
                 notify('❌ ошибка', error.message);
             });
         }
 
         function renderComments(adId) {
-            const comments = allComments[adId] || [];
+            const comments = cache.comments[adId] || [];
             if (comments.length === 0) return '';
 
             let html = `<div class="comments">`;
             comments.forEach(c => {
-                const userData = allUsers[c.userId] || {};
+                const userData = cache.users[c.userId] || {};
                 const author = userData.email || c.userId;
                 html += `
                         <div class="comment">
@@ -1352,7 +1359,7 @@
         // ============================================================
         function toggleFav(adId) {
             if (!currentUser) return;
-            const isFav = allFavs.includes(adId);
+            const isFav = cache.favs.includes(adId);
 
             if (isFav) {
                 db.collection('favorites')
@@ -1363,20 +1370,20 @@
                         snapshot.forEach(doc => {
                             doc.ref.delete();
                         });
-                        loadFavorites();
+                        loadAllData(true);
                     });
             } else {
                 db.collection('favorites').add({
                     userId: currentUser,
                     adId: adId
                 }).then(() => {
-                    loadFavorites();
+                    loadAllData(true);
                 });
             }
         }
 
         function isFav(adId) {
-            return allFavs.includes(adId);
+            return cache.favs.includes(adId);
         }
 
         // ============================================================
@@ -1384,7 +1391,7 @@
         // ============================================================
         function openChat(partnerId) {
             currentChatPartner = partnerId;
-            document.getElementById('chatPartnerName').innerText = '💬 ' + (allUsers[partnerId]?.email || partnerId);
+            document.getElementById('chatPartnerName').innerText = '💬 ' + (cache.users[partnerId]?.email || partnerId);
             document.getElementById('chatBlock').classList.remove('hidden');
             document.getElementById('profileBlock').classList.add('hidden');
             document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
@@ -1406,7 +1413,7 @@
         function renderChat() {
             if (!currentChatPartner) return;
             const chatId = getChatId(currentUser, currentChatPartner);
-            const chatData = allChats[chatId] || { messages: [] };
+            const chatData = cache.chats[chatId] || { messages: [] };
             const messages = chatData.messages || [];
             const container = document.getElementById('chatMessages');
 
@@ -1419,7 +1426,7 @@
             let html = '';
             messages.forEach(m => {
                 const isMe = m.sender === currentUser;
-                const senderName = allUsers[m.sender]?.email || m.sender;
+                const senderName = cache.users[m.sender]?.email || m.sender;
                 html += `
                         <div class="msg" style="text-align:${isMe ? 'right' : 'left'};background:${isMe ? 'rgba(240,184,0,0.1)' : 'rgba(255,255,255,0.03)'};">
                             <span class="sender">${isMe ? 'я' : senderName}</span>
@@ -1438,7 +1445,7 @@
             if (!text || !currentChatPartner) return;
 
             const chatId = getChatId(currentUser, currentChatPartner);
-            const chatData = allChats[chatId] || { participants: [currentUser, currentChatPartner], messages: [] };
+            const chatData = cache.chats[chatId] || { participants: [currentUser, currentChatPartner], messages: [] };
             chatData.messages.push({
                 sender: currentUser,
                 text: text,
@@ -1449,7 +1456,7 @@
                 .then(() => {
                     input.value = '';
                     notify('💬 сообщение отправлено', text);
-                    loadChats();
+                    loadAllData(true);
                 })
                 .catch((error) => {
                     notify('❌ ошибка', error.message);
@@ -1472,7 +1479,7 @@
             const searchText = document.getElementById(searchInputId) ? document.getElementById(searchInputId).value
                 .toLowerCase() : '';
 
-            let filtered = allAds.filter(ad => {
+            let filtered = cache.ads.filter(ad => {
                 if (filterType && ad.type !== filterType) return false;
                 if (roleFilter && roleFilter.value !== 'all' && ad.role !== roleFilter.value) return false;
                 if (engineFilter && engineFilter.value !== 'all' && ad.engine !== engineFilter.value) return false;
@@ -1480,13 +1487,6 @@
                 if (searchText && !ad.title.toLowerCase().includes(searchText) && !ad.description.toLowerCase().includes(
                         searchText)) return false;
                 return true;
-            });
-
-            // Подгружаем комментарии для отображения
-            filtered.forEach(ad => {
-                if (!allComments[ad.id]) {
-                    loadCommentsForAd(ad.id);
-                }
             });
 
             if (filtered.length === 0) {
@@ -1497,7 +1497,7 @@
 
             let html = '';
             filtered.forEach(ad => {
-                // Увеличиваем просмотры
+                // Увеличиваем просмотры (раз в 10 секунд, чтобы не спамить)
                 if (ad.userId !== currentUser) {
                     const views = (ad.views || 0) + 1;
                     db.collection('ads').doc(ad.id).update({ views: views }).catch(() => {});
@@ -1507,7 +1507,7 @@
                     '<span class="type-badge badge-work">💼 ищу работу</span>';
                 const isOwn = ad.userId === currentUser;
                 const commentsHtml = renderComments(ad.id);
-                const userData = allUsers[ad.userId] || {};
+                const userData = cache.users[ad.userId] || {};
                 const authorEmail = userData.email || ad.userId;
 
                 html += `
@@ -1568,7 +1568,7 @@
         document.getElementById('filterWorkEngine').addEventListener('change', renderAll);
 
         // ============================================================
-        // 15. АВТО-ВХОД
+        // 15. АВТО-ВХОД И ОБНОВЛЕНИЕ КЕША КАЖДЫЕ 10 СЕКУНД
         // ============================================================
         auth.onAuthStateChanged((user) => {
             if (user) {
@@ -1578,21 +1578,28 @@
                 localStorage.setItem('currentUserEmail', currentUserEmail);
                 if (document.getElementById('userBlock').classList.contains('hidden')) {
                     showUser();
+                } else {
+                    loadAllData(true);
                 }
             } else {
                 const savedUser = localStorage.getItem('currentUser');
-                if (savedUser) {
-                    // пытаемся восстановить сессию
-                } else {
+                if (!savedUser) {
                     document.getElementById('authBlock').classList.remove('hidden');
                     document.getElementById('userBlock').classList.add('hidden');
                 }
             }
         });
 
-        // Если уже есть сохранённый пользователь, но Firebase ещё не ответил
+        // Автообновление кеша каждые 10 секунд (без перегрузки Firebase)
+        setInterval(() => {
+            if (currentUser) {
+                loadAllData(false);
+            }
+        }, 10000);
+
+        // Если уже есть сохранённый пользователь
         const savedUser = localStorage.getItem('currentUser');
-        if (savedUser) {
+        if (savedUser && !currentUser) {
             // Ждём onAuthStateChanged
         }
     </script>
