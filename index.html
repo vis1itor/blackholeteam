@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Black Hole — оптимизированный</title>
+    <title>Black Hole — студии</title>
 
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js">
     </script>
@@ -13,7 +13,6 @@
     </script>
 
     <style>
-        /* ===== СТИЛИ (КОРОТКО) ===== */
         * {
             margin: 0;
             padding: 0;
@@ -29,7 +28,7 @@
             padding: 20px;
         }
         .glass-container {
-            max-width: 720px;
+            max-width: 780px;
             width: 100%;
             padding: 30px 25px;
             border-radius: 32px;
@@ -696,10 +695,8 @@
                 <button class="tab-btn" data-tab="create">➕ создать</button>
                 <button class="tab-btn" data-tab="work">💼 работа</button>
                 <button class="tab-btn" data-tab="favorites">⭐ избранное</button>
+                <button class="tab-btn" data-tab="studios">🏢 студии</button>
             </div>
-
-            <!-- КНОПКА ОБНОВИТЬ -->
-            <button class="refresh-btn" id="refreshBtn">🔄 обновить</button>
 
             <!-- ПОИСК -->
             <div class="tab-content active" id="tabSearch">
@@ -796,6 +793,12 @@
                 <div id="favoritesResults"></div>
             </div>
 
+            <!-- СТУДИИ -->
+            <div class="tab-content" id="tabStudios">
+                <button class="glass-btn btn-gold" id="createStudioBtn" style="margin-bottom:12px;">➕ создать студию</button>
+                <div id="studiosList"></div>
+            </div>
+
             <!-- ЧАТ -->
             <div id="chatBlock" class="hidden">
                 <button class="btn-back" id="chatBackBtn">← назад</button>
@@ -849,7 +852,7 @@
 
     <script>
         // ============================================================
-        // 1. НАСТРОЙКИ
+        // 1. FIREBASE
         // ============================================================
         const firebaseConfig = {
             apiKey: "AIzaSyC6J2lDt-ia1yQqrMoJ7OF7tQMJ0jNNmRo",
@@ -880,6 +883,7 @@
             favs: [],
             chats: {},
             comments: {},
+            studios: [],
             lastUpdate: 0
         };
 
@@ -929,7 +933,148 @@
         }
 
         // ============================================================
-        // 4. ЗАГРУЗКА ДАННЫХ (ОДИН РАЗ В МИНУТУ ИЛИ ПО КНОПКЕ)
+        // 4. СТУДИИ
+        // ============================================================
+        function getSimilarity(str1, str2) {
+            const longer = str1.length > str2.length ? str1 : str2;
+            const shorter = str1.length > str2.length ? str2 : str1;
+            if (longer.length === 0) return 1.0;
+
+            const costs = [];
+            for (let i = 0; i <= longer.length; i++) {
+                let lastValue = i;
+                for (let j = 0; j <= shorter.length; j++) {
+                    if (i === 0) costs[j] = j;
+                    else if (j > 0) {
+                        let newValue = costs[j - 1];
+                        if (longer.charAt(i - 1) !== shorter.charAt(j - 1))
+                            newValue = Math.min(Math.min(newValue, lastValue), costs[j]) + 1;
+                        costs[j - 1] = lastValue;
+                        lastValue = newValue;
+                    }
+                }
+                if (i > 0) costs[shorter.length] = lastValue;
+            }
+            const distance = costs[shorter.length];
+            return 1 - (distance / longer.length);
+        }
+
+        function generateStudioId() {
+            const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+            let id = '';
+            for (let i = 0; i < 8; i++) {
+                id += chars.charAt(Math.floor(Math.random() * chars.length));
+            }
+            return id;
+        }
+
+        function createStudio() {
+            const name = prompt('Введите название студии:');
+            if (!name) return;
+
+            const nameLower = name.toLowerCase().trim();
+
+            db.collection('studios').get()
+                .then((snapshot) => {
+                    let isSimilar = false;
+                    snapshot.forEach(doc => {
+                        const existing = doc.data().name.toLowerCase();
+                        const similarity = getSimilarity(nameLower, existing);
+                        if (similarity > 0.75) {
+                            isSimilar = true;
+                            notify('⚠️ плагиат', 'Название слишком похоже на "' + doc.data().name + '"');
+                        }
+                    });
+                    if (isSimilar) return;
+
+                    return db.collection('studios').add({
+                        name: name,
+                        owner: currentUser,
+                        members: [currentUser],
+                        createdAt: new Date().toISOString(),
+                        studioId: generateStudioId()
+                    });
+                })
+                .then((docRef) => {
+                    if (docRef) {
+                        notify('✅ студия создана', name);
+                        loadStudios();
+                    }
+                })
+                .catch((error) => {
+                    notify('❌ ошибка', error.message);
+                });
+        }
+
+        function inviteToStudio(studioId) {
+            const targetUserId = prompt('Введите ID пользователя (его email или uid):');
+            if (!targetUserId) return;
+
+            db.collection('studios').doc(studioId).update({
+                invitations: firebase.firestore.FieldValue.arrayUnion(targetUserId)
+            })
+            .then(() => {
+                notify('✅ приглашение отправлено', 'пользователю ' + targetUserId);
+            })
+            .catch((error) => {
+                notify('❌ ошибка', error.message);
+            });
+        }
+
+        function loadStudios() {
+            if (!currentUser) return;
+
+            db.collection('studios')
+                .where('members', 'array-contains', currentUser)
+                .get()
+                .then((snapshot) => {
+                    cache.studios = [];
+                    snapshot.forEach(doc => {
+                        cache.studios.push({ id: doc.id, ...doc.data() });
+                    });
+                    renderStudios();
+                })
+                .catch(() => {});
+        }
+
+        function renderStudios() {
+            const container = document.getElementById('studiosList');
+            if (!container) return;
+
+            if (cache.studios.length === 0) {
+                container.innerHTML = '<p style="color:rgba(255,255,255,0.2);">вы не состоите в студиях</p>';
+                return;
+            }
+
+            let html = '';
+            cache.studios.forEach(studio => {
+                html += `
+                    <div class="glass-card">
+                        <div class="card-title">${studio.name}</div>
+                        <div class="card-tags">🏷️ ID: ${studio.studioId} · 👥 ${studio.members ? studio.members.length : 1}</div>
+                        <div class="card-actions">
+                            <button class="btn-small btn-chat" onclick="inviteToStudio('${studio.id}')">➕ пригласить</button>
+                            <button class="btn-small btn-edit" onclick="viewStudio('${studio.id}')">👁️ просмотр</button>
+                        </div>
+                    </div>
+                `;
+            });
+            container.innerHTML = html;
+        }
+
+        function viewStudio(studioId) {
+            const studio = cache.studios.find(s => s.id === studioId);
+            if (!studio) {
+                notify('❌ ошибка', 'студия не найдена');
+                return;
+            }
+
+            let membersList = studio.members ? studio.members.join(', ') : 'нет участников';
+            alert(`🏢 Студия: ${studio.name}\nID: ${studio.studioId}\nУчастники: ${membersList}`);
+        }
+
+        // ============================================================
+        // 5. ЗАГРУЗКА ДАННЫХ
         // ============================================================
         function loadAllData(force = false) {
             if (isLoading) return;
@@ -937,13 +1082,11 @@
 
             const now = Date.now();
             if (!force && cache.lastUpdate > 0 && (now - cache.lastUpdate) < 60000) {
-                // Данные свежие (меньше минуты) — не грузим
                 isLoading = false;
                 renderAll();
                 return;
             }
 
-            // Загружаем объявления
             db.collection('ads').get()
                 .then((snapshot) => {
                     cache.ads = [];
@@ -1008,6 +1151,7 @@
                     cache.lastUpdate = Date.now();
                     isLoading = false;
                     renderAll();
+                    if (currentUser) loadStudios();
                 })
                 .catch(() => {
                     isLoading = false;
@@ -1016,7 +1160,7 @@
         }
 
         // ============================================================
-        // 5. АВТОРИЗАЦИЯ
+        // 6. АВТОРИЗАЦИЯ
         // ============================================================
         function showUser() {
             document.getElementById('authBlock').classList.add('hidden');
@@ -1104,7 +1248,7 @@
         }
 
         // ============================================================
-        // 6. ПРОФИЛЬ
+        // 7. ПРОФИЛЬ
         // ============================================================
         function openProfile(userId) {
             const userData = cache.users[userId] || {};
@@ -1159,7 +1303,7 @@
         }
 
         // ============================================================
-        // 7. РЕДАКТИРОВАНИЕ ПРОФИЛЯ
+        // 8. РЕДАКТИРОВАНИЕ ПРОФИЛЯ
         // ============================================================
         document.getElementById('editProfileBtn').addEventListener('click', function() {
             const userData = cache.users[currentUser] || {};
@@ -1191,7 +1335,7 @@
         });
 
         // ============================================================
-        // 8. ОБЪЯВЛЕНИЯ
+        // 9. ОБЪЯВЛЕНИЯ
         // ============================================================
         document.getElementById('adImage').addEventListener('change', function(e) {
             const file = e.target.files[0];
@@ -1319,7 +1463,7 @@
         });
 
         // ============================================================
-        // 9. КОММЕНТАРИИ
+        // 10. КОММЕНТАРИИ
         // ============================================================
         function addComment(adId) {
             const input = document.getElementById('commentInput_' + adId);
@@ -1367,7 +1511,7 @@
         }
 
         // ============================================================
-        // 10. ИЗБРАННОЕ
+        // 11. ИЗБРАННОЕ
         // ============================================================
         function toggleFav(adId) {
             if (!currentUser) return;
@@ -1395,7 +1539,7 @@
         }
 
         // ============================================================
-        // 11. ЧАТ
+        // 12. ЧАТ
         // ============================================================
         function openChat(partnerId) {
             currentChatPartner = partnerId;
@@ -1478,7 +1622,7 @@
         document.getElementById('chatBackBtn').addEventListener('click', closeChat);
 
         // ============================================================
-        // 12. ФИЛЬТРЫ И ОТРИСОВКА
+        // 13. ФИЛЬТРЫ И ОТРИСОВКА
         // ============================================================
         function applyFilters() {
             renderAll();
@@ -1547,10 +1691,11 @@
             renderAdsList('searchResults', 'team', 'filterRole', 'filterEngine', 'searchText', false);
             renderAdsList('workResults', 'work', 'filterWorkRole', 'filterWorkEngine', 'searchTextWork', false);
             renderAdsList('favoritesResults', null, 'filterRole', 'filterEngine', null, true);
+            // Студии рендерятся отдельно через loadStudios
         }
 
         // ============================================================
-        // 13. ВКЛАДКИ
+        // 14. ВКЛАДКИ
         // ============================================================
         document.getElementById('tabButtons').addEventListener('click', function(e) {
             const btn = e.target.closest('.tab-btn');
@@ -1560,8 +1705,14 @@
             const tabId = btn.dataset.tab;
             document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
             document.getElementById('tab' + tabId.charAt(0).toUpperCase() + tabId.slice(1)).classList.add('active');
-            // При переключении вкладки не обновляем данные — используем кеш
+
+            if (tabId === 'studios') {
+                loadStudios();
+            }
         });
+
+        // Кнопка создания студии
+        document.getElementById('createStudioBtn').addEventListener('click', createStudio);
 
         document.getElementById('profileBackBtn').addEventListener('click', closeProfile);
         document.getElementById('registerBtn').addEventListener('click', registerUser);
@@ -1569,29 +1720,22 @@
         document.getElementById('logoutBtn').addEventListener('click', logoutUser);
         document.getElementById('publishBtn').addEventListener('click', createAd);
 
-        // Кнопка обновления
-        document.getElementById('refreshBtn').addEventListener('click', function() {
-            loadAllData(true);
-            notify('🔄 обновлено', 'данные загружены');
-        });
-
-        // Фильтры — только рендер, без загрузки
         document.getElementById('filterRole').addEventListener('change', renderAll);
         document.getElementById('filterEngine').addEventListener('change', renderAll);
         document.getElementById('filterWorkRole').addEventListener('change', renderAll);
         document.getElementById('filterWorkEngine').addEventListener('change', renderAll);
 
         // ============================================================
-        // 14. АВТООБНОВЛЕНИЕ РАЗ В МИНУТУ
+        // 15. АВТООБНОВЛЕНИЕ
         // ============================================================
         setInterval(() => {
             if (currentUser) {
                 loadAllData(false);
             }
-        }, 60000); // 1 минута
+        }, 60000);
 
         // ============================================================
-        // 15. АВТО-ВХОД
+        // 16. АВТО-ВХОД
         // ============================================================
         auth.onAuthStateChanged((user) => {
             if (user) {
