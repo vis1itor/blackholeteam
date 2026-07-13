@@ -3,40 +3,26 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nebula — студии и приглашения</title>
 
-    <!-- ===== МЕТА-ТЕГИ ДЛЯ ПОИСКОВИКОВ ===== -->
-    <title>Nebula — платформа для поиска команды в геймдеве</title>
-    <meta name="description" content="Nebula — находи команду, студии и разработчиков для игр. Создавай проекты, общайся и развивайся в геймдеве." />
-    <meta name="keywords" content="поиск команды, геймдев, разработка игр, студия, Nebula, найти разработчиков, геймдизайн, инди-игры" />
-    <link rel="canonical" href="https://vis1itor.github.io/nebula/" />
-
-    <!-- ===== ОТКРЫТЫЕ ГРАФЫ (ДЛЯ СОЦСЕТЕЙ) ===== -->
-    <meta property="og:title" content="Nebula — платформа для поиска команды в геймдеве" />
-    <meta property="og:description" content="Находи команду, студии и разработчиков для игр. Создавай проекты, общайся и развивайся в геймдеве." />
-    <meta property="og:url" content="https://vis1itor.github.io/nebula/" />
-    <meta property="og:type" content="website" />
-
-    <!-- ===== ШРИФТ DELA GOTHIC ONE ===== -->
     <link href="https://fonts.googleapis.com/css2?family=Dela+Gothic+One&display=swap" rel="stylesheet">
 
-    <!-- ===== FIREBASE ===== -->
-    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js">
+    <!-- ===== FIREBASE SDK (ОБНОВЛЕННАЯ ВЕРСИЯ) ===== -->
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js">
     </script>
-    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js">
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js">
     </script>
-    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js">
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js">
     </script>
 
     <style>
-        /* ===== ГЛОБАЛЬНЫЙ СБРОС ===== */
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
         }
-
         body {
-            font-family: 'Dela Gothic One', cursive;
+            font-family: 'Segoe UI', system-ui, sans-serif;
             background: radial-gradient(ellipse at 20% 50%, #0d0d2b, #05050f 70%);
             min-height: 100vh;
             display: flex;
@@ -44,8 +30,6 @@
             align-items: flex-start;
             padding: 20px;
         }
-
-        /* ===== КОНТЕЙНЕР ===== */
         .glass-container {
             max-width: 820px;
             width: 100%;
@@ -59,7 +43,6 @@
             position: relative;
             overflow: hidden;
         }
-
         .glass-container::before {
             content: '';
             position: absolute;
@@ -70,8 +53,6 @@
             background: radial-gradient(ellipse at 30% 20%, rgba(255, 255, 255, 0.03), transparent 60%);
             pointer-events: none;
         }
-
-        /* ===== ЛОГО ===== */
         .logo {
             font-family: 'Dela Gothic One', cursive;
             font-size: 2.8em;
@@ -83,11 +64,9 @@
             position: relative;
             z-index: 1;
         }
-
         .logo span {
             color: #00D4FF;
         }
-
         .subtitle {
             text-align: center;
             color: rgba(224, 244, 255, 0.4);
@@ -99,8 +78,6 @@
             z-index: 1;
             letter-spacing: 2px;
         }
-
-        /* ===== ТАБЫ ===== */
         .tabs {
             display: flex;
             gap: 6px;
@@ -109,7 +86,6 @@
             position: relative;
             z-index: 1;
         }
-
         .tab-btn {
             flex: 1;
             padding: 12px 8px;
@@ -125,31 +101,35 @@
             border: 1px solid rgba(255, 255, 255, 0.06);
             color: rgba(224, 244, 255, 0.4);
             min-width: 60px;
+            position: relative;
         }
-
+        .tab-btn .badge {
+            background: #ff4444;
+            color: #fff;
+            border-radius: 50%;
+            padding: 1px 6px;
+            font-size: 0.6em;
+            margin-left: 4px;
+        }
         .tab-btn:hover {
             background: rgba(255, 255, 255, 0.06);
             color: #E0F4FF;
         }
-
         .tab-btn.active {
             background: rgba(0, 180, 255, 0.1);
             border-color: rgba(0, 180, 255, 0.2);
             color: #00D4FF;
             box-shadow: 0 0 30px rgba(0, 180, 255, 0.05);
         }
-
         .tab-content {
             display: none;
             position: relative;
             z-index: 1;
         }
-
         .tab-content.active {
             display: block;
             animation: fadeSlide 0.3s ease;
         }
-
         @keyframes fadeSlide {
             0% {
                 opacity: 0;
@@ -160,8 +140,6 @@
                 transform: translateY(0);
             }
         }
-
-        /* ===== ПОЛЯ ВВОДА ===== */
         .glass-input {
             width: 100%;
             padding: 12px 16px;
@@ -179,34 +157,27 @@
             z-index: 1;
             font-family: 'Segoe UI', system-ui, sans-serif;
         }
-
         .glass-input:focus {
             background: rgba(255, 255, 255, 0.06);
             border-color: rgba(0, 180, 255, 0.2);
             box-shadow: 0 0 30px rgba(0, 180, 255, 0.05);
         }
-
         .glass-input::placeholder {
             color: rgba(224, 244, 255, 0.2);
         }
-
         select.glass-input {
             appearance: none;
             cursor: pointer;
         }
-
         select.glass-input option {
             background: #0d0d2b;
             color: #E0F4FF;
         }
-
         textarea.glass-input {
             resize: vertical;
             min-height: 70px;
             font-family: 'Segoe UI', system-ui, sans-serif;
         }
-
-        /* ===== КНОПКИ ===== */
         .glass-btn {
             width: 100%;
             padding: 12px;
@@ -221,39 +192,32 @@
             position: relative;
             z-index: 1;
         }
-
         .btn-cyan {
             background: linear-gradient(145deg, #00D4FF, #0099CC);
             color: #05050f;
             box-shadow: 0 8px 24px rgba(0, 180, 255, 0.15);
         }
-
         .btn-cyan:hover {
             transform: scale(1.01);
             box-shadow: 0 12px 36px rgba(0, 180, 255, 0.25);
         }
-
         .btn-ghost {
             background: rgba(255, 255, 255, 0.03);
             color: rgba(224, 244, 255, 0.5);
             border: 1px solid rgba(255, 255, 255, 0.06);
         }
-
         .btn-ghost:hover {
             background: rgba(255, 255, 255, 0.06);
             color: #E0F4FF;
         }
-
         .btn-danger {
             background: rgba(255, 50, 50, 0.08);
             color: #ff6666;
             border: 1px solid rgba(255, 50, 50, 0.1);
         }
-
         .btn-danger:hover {
             background: rgba(255, 50, 50, 0.15);
         }
-
         .btn-small {
             padding: 6px 12px;
             font-size: 0.7em;
@@ -267,51 +231,65 @@
             cursor: pointer;
             transition: 0.2s;
         }
-
         .btn-small:hover {
             transform: scale(1.05);
         }
-
         .btn-edit {
             background: rgba(0, 180, 255, 0.08);
             color: #66ccff;
             border: 1px solid rgba(0, 180, 255, 0.05);
         }
-
         .btn-edit:hover {
             background: rgba(0, 180, 255, 0.15);
         }
-
         .btn-delete {
             background: rgba(255, 50, 50, 0.08);
             color: #ff6666;
             border: 1px solid rgba(255, 50, 50, 0.05);
         }
-
         .btn-delete:hover {
             background: rgba(255, 50, 50, 0.15);
         }
-
         .btn-fav {
             background: rgba(0, 180, 255, 0.05);
             color: #00D4FF;
             border: 1px solid rgba(0, 180, 255, 0.05);
         }
-
         .btn-fav.active {
             background: rgba(0, 180, 255, 0.15);
         }
-
         .btn-chat {
             background: rgba(0, 200, 150, 0.05);
             color: #66ddbb;
             border: 1px solid rgba(0, 200, 150, 0.05);
         }
-
         .btn-chat:hover {
             background: rgba(0, 200, 150, 0.1);
         }
-
+        .btn-invite {
+            background: rgba(255, 200, 0, 0.08);
+            color: #ffcc44;
+            border: 1px solid rgba(255, 200, 0, 0.1);
+        }
+        .btn-invite:hover {
+            background: rgba(255, 200, 0, 0.15);
+        }
+        .btn-accept {
+            background: rgba(0, 200, 100, 0.08);
+            color: #66dd88;
+            border: 1px solid rgba(0, 200, 100, 0.05);
+        }
+        .btn-accept:hover {
+            background: rgba(0, 200, 100, 0.15);
+        }
+        .btn-reject {
+            background: rgba(255, 50, 50, 0.08);
+            color: #ff6666;
+            border: 1px solid rgba(255, 50, 50, 0.05);
+        }
+        .btn-reject:hover {
+            background: rgba(255, 50, 50, 0.15);
+        }
         .btn-back {
             background: rgba(255, 255, 255, 0.03);
             color: rgba(224, 244, 255, 0.4);
@@ -328,19 +306,15 @@
             z-index: 1;
             letter-spacing: 1px;
         }
-
         .btn-back:hover {
             background: rgba(255, 255, 255, 0.06);
             color: #E0F4FF;
         }
-
-        /* ===== КАРТОЧКИ (ВЕРТИКАЛЬНЫЕ, 2 В РЯД) ===== */
         .cards-grid {
             display: grid;
             grid-template-columns: 1fr 1fr;
             gap: 12px;
         }
-
         .glass-card {
             background: rgba(255, 255, 255, 0.03);
             backdrop-filter: blur(12px);
@@ -355,14 +329,16 @@
             flex-direction: column;
             height: 100%;
         }
-
         .glass-card:hover {
             background: rgba(255, 255, 255, 0.05);
             transform: translateY(-2px);
             border-color: rgba(0, 180, 255, 0.1);
             box-shadow: 0 8px 30px rgba(0, 0, 0, 0.2);
         }
-
+        .glass-card.invite-card {
+            border-color: rgba(255, 200, 0, 0.15);
+            background: rgba(255, 200, 0, 0.03);
+        }
         .card-title {
             color: #00D4FF;
             font-family: 'Dela Gothic One', cursive;
@@ -370,13 +346,11 @@
             font-size: 1em;
             letter-spacing: 0.5px;
         }
-
         .card-tags {
             color: rgba(224, 244, 255, 0.3);
             font-family: 'Segoe UI', system-ui, sans-serif;
             font-size: 0.7em;
         }
-
         .card-desc {
             color: rgba(224, 244, 255, 0.6);
             font-family: 'Segoe UI', system-ui, sans-serif;
@@ -384,13 +358,11 @@
             line-height: 1.5;
             flex: 1;
         }
-
         .card-contacts {
             color: rgba(224, 244, 255, 0.2);
             font-family: 'Segoe UI', system-ui, sans-serif;
             font-size: 0.75em;
         }
-
         .card-img {
             max-width: 100%;
             max-height: 100px;
@@ -399,56 +371,46 @@
             object-fit: cover;
             background: rgba(255, 255, 255, 0.02);
         }
-
         .card-actions {
             margin-top: 8px;
             display: flex;
             gap: 4px;
             flex-wrap: wrap;
         }
-
         .card-actions .btn-small {
             font-size: 0.6em;
             padding: 4px 10px;
         }
-
-        /* ===== ПРОЧЕЕ ===== */
         .divider {
             margin: 16px 0;
             border: none;
             height: 1px;
             background: linear-gradient(to right, transparent, rgba(255, 255, 255, 0.06), transparent);
         }
-
         .message {
             text-align: center;
             margin: 8px 0;
             font-size: 0.9em;
             font-family: 'Segoe UI', system-ui, sans-serif;
         }
-
         .message.success {
             color: #66ddbb;
         }
         .message.error {
             color: #ff6666;
         }
-
         .hidden {
             display: none !important;
         }
-
         .user-greeting {
             color: rgba(224, 244, 255, 0.7);
             font-family: 'Segoe UI', system-ui, sans-serif;
             font-size: 1em;
         }
-
         .user-greeting span {
             color: #00D4FF;
             font-weight: 700;
         }
-
         .footer-note {
             margin-top: 20px;
             text-align: center;
@@ -459,14 +421,12 @@
             position: relative;
             z-index: 1;
         }
-
         .filter-row {
             display: flex;
             flex-direction: column;
             gap: 6px;
             margin-bottom: 12px;
         }
-
         .filter-row select,
         .filter-row input {
             width: 100%;
@@ -481,12 +441,10 @@
             font-size: 0.9em;
             outline: none;
         }
-
         .filter-row select option {
             background: #0d0d2b;
             color: #E0F4FF;
         }
-
         .type-badge {
             display: inline-block;
             padding: 2px 12px;
@@ -498,19 +456,21 @@
             margin-bottom: 4px;
             width: fit-content;
         }
-
         .badge-team {
             background: rgba(0, 180, 255, 0.1);
             color: #00D4FF;
             border: 1px solid rgba(0, 180, 255, 0.05);
         }
-
         .badge-work {
             background: rgba(0, 200, 150, 0.08);
             color: #66ddbb;
             border: 1px solid rgba(0, 200, 150, 0.05);
         }
-
+        .badge-invite {
+            background: rgba(255, 200, 0, 0.1);
+            color: #ffcc44;
+            border: 1px solid rgba(255, 200, 0, 0.05);
+        }
         .profile-avatar {
             width: 60px;
             height: 60px;
@@ -524,7 +484,6 @@
             color: #fff;
             margin-bottom: 12px;
         }
-
         .profile-field {
             color: rgba(224, 244, 255, 0.3);
             font-family: 'Segoe UI', system-ui, sans-serif;
@@ -533,13 +492,16 @@
             letter-spacing: 0.5px;
             margin-top: 6px;
         }
-
         .profile-value {
             color: #E0F4FF;
             font-family: 'Segoe UI', system-ui, sans-serif;
             font-size: 0.95em;
+            word-break: break-all;
         }
-
+        .profile-value.uid {
+            font-size: 0.6em;
+            color: rgba(224, 244, 255, 0.2);
+        }
         .clickable-author {
             color: rgba(224, 244, 255, 0.3);
             cursor: pointer;
@@ -550,12 +512,10 @@
             font-family: 'Segoe UI', system-ui, sans-serif;
             font-size: 0.85em;
         }
-
         .clickable-author:hover {
             color: #00D4FF;
             background: rgba(0, 180, 255, 0.05);
         }
-
         .chat-messages {
             max-height: 250px;
             overflow-y: auto;
@@ -564,7 +524,6 @@
             padding: 12px;
             margin-bottom: 10px;
         }
-
         .chat-messages .msg {
             padding: 6px 10px;
             margin: 4px 0;
@@ -573,23 +532,19 @@
             font-family: 'Segoe UI', system-ui, sans-serif;
             font-size: 0.9em;
         }
-
         .chat-messages .msg .sender {
             color: #00D4FF;
             font-weight: 600;
         }
-
         .chat-messages .msg .time {
             color: rgba(224, 244, 255, 0.15);
             font-size: 0.7em;
             margin-left: 8px;
         }
-
         .chat-input-row {
             display: flex;
             gap: 8px;
         }
-
         .chat-input-row input {
             flex: 1;
             padding: 10px 14px;
@@ -601,7 +556,6 @@
             outline: none;
             font-family: 'Segoe UI', system-ui, sans-serif;
         }
-
         .chat-input-row button {
             padding: 10px 20px;
             border: none;
@@ -613,24 +567,20 @@
             cursor: pointer;
             transition: 0.2s;
         }
-
         .chat-input-row button:hover {
             transform: scale(1.02);
         }
-
         .edit-form {
             background: rgba(0, 0, 0, 0.15);
             border-radius: 16px;
             padding: 12px;
             margin: 8px 0;
         }
-
         .search-row {
             display: flex;
             gap: 8px;
             margin-bottom: 10px;
         }
-
         .search-row input {
             flex: 1;
             padding: 10px 14px;
@@ -642,14 +592,12 @@
             outline: none;
             font-family: 'Segoe UI', system-ui, sans-serif;
         }
-
         .file-input-wrapper {
             position: relative;
             display: inline-block;
             width: 100%;
             margin: 6px 0 10px 0;
         }
-
         .file-input-wrapper input[type="file"] {
             position: absolute;
             opacity: 0;
@@ -657,7 +605,6 @@
             height: 100%;
             cursor: pointer;
         }
-
         .file-input-wrapper .file-label {
             display: block;
             padding: 12px;
@@ -671,55 +618,46 @@
             cursor: pointer;
             transition: 0.2s;
         }
-
         .file-input-wrapper .file-label:hover {
             background: rgba(255, 255, 255, 0.05);
             border-color: rgba(0, 180, 255, 0.1);
             color: #E0F4FF;
         }
-
         .file-input-wrapper .file-label.has-file {
             border-color: #00D4FF;
             color: #00D4FF;
             background: rgba(0, 180, 255, 0.05);
         }
-
         .preview-img {
             max-width: 100%;
             max-height: 100px;
             border-radius: 12px;
             margin: 6px 0;
         }
-
         .comments {
             margin-top: 10px;
             border-top: 1px solid rgba(255, 255, 255, 0.04);
             padding-top: 10px;
         }
-
         .comments .comment {
             padding: 4px 0;
             font-family: 'Segoe UI', system-ui, sans-serif;
             font-size: 0.85em;
             color: rgba(224, 244, 255, 0.5);
         }
-
         .comments .comment .c-author {
             color: #00D4FF;
             font-weight: 600;
         }
-
         .comments .comment .c-time {
             color: rgba(224, 244, 255, 0.12);
             font-size: 0.7em;
         }
-
         .comments .comment-input-row {
             display: flex;
             gap: 6px;
             margin-top: 6px;
         }
-
         .comments .comment-input-row input {
             flex: 1;
             padding: 8px 12px;
@@ -732,7 +670,6 @@
             font-family: 'Segoe UI', system-ui, sans-serif;
             font-size: 0.85em;
         }
-
         .comments .comment-input-row button {
             padding: 8px 16px;
             border: none;
@@ -743,7 +680,6 @@
             font-size: 0.7em;
             cursor: pointer;
         }
-
         .notification {
             position: fixed;
             bottom: 20px;
@@ -760,18 +696,15 @@
             max-width: 300px;
             font-family: 'Segoe UI', system-ui, sans-serif;
         }
-
         .notification .notif-title {
             color: #00D4FF;
             font-weight: 700;
             font-size: 0.9em;
         }
-
         .notification .notif-text {
             color: rgba(224, 244, 255, 0.5);
             font-size: 0.85em;
         }
-
         @keyframes slideIn {
             from {
                 transform: translateX(60px);
@@ -782,13 +715,6 @@
                 opacity: 1;
             }
         }
-
-        .views {
-            color: rgba(224, 244, 255, 0.1);
-            font-family: 'Segoe UI', system-ui, sans-serif;
-            font-size: 0.6em;
-        }
-
         .refresh-btn {
             background: rgba(255, 255, 255, 0.03);
             border: 1px solid rgba(255, 255, 255, 0.06);
@@ -804,12 +730,10 @@
             z-index: 1;
             margin-bottom: 10px;
         }
-
         .refresh-btn:hover {
             background: rgba(255, 255, 255, 0.05);
             color: #E0F4FF;
         }
-
         .resume-card {
             background: rgba(255, 255, 255, 0.02);
             border: 1px solid rgba(255, 255, 255, 0.04);
@@ -817,70 +741,57 @@
             padding: 14px 16px;
             margin: 8px 0;
         }
-
         .resume-card .resume-title {
             color: #00D4FF;
             font-family: 'Dela Gothic One', cursive;
             font-weight: 400;
             font-size: 0.9em;
         }
-
         .resume-card .resume-meta {
             color: rgba(224, 244, 255, 0.15);
             font-family: 'Segoe UI', system-ui, sans-serif;
             font-size: 0.7em;
         }
-
         .resume-card .resume-text {
             color: rgba(224, 244, 255, 0.4);
             font-family: 'Segoe UI', system-ui, sans-serif;
             font-size: 0.85em;
             margin-top: 4px;
         }
-
-        /* ===== АДАПТИВ ===== */
         @media (max-width: 600px) {
             .cards-grid {
                 grid-template-columns: 1fr;
                 gap: 10px;
             }
-
             .glass-container {
                 padding: 16px 12px;
             }
-
             .logo {
                 font-size: 2em;
             }
-
             .tab-btn {
                 font-size: 0.6em;
                 padding: 8px 4px;
                 min-width: 40px;
             }
-
             .glass-input {
                 padding: 10px 12px;
                 font-size: 0.9em;
             }
-
             .glass-btn {
                 padding: 10px;
                 font-size: 0.8em;
             }
         }
-
         @media (max-width: 400px) {
             .tabs {
                 gap: 4px;
             }
-
             .tab-btn {
                 font-size: 0.5em;
                 padding: 6px 3px;
                 min-width: 35px;
             }
-
             .logo {
                 font-size: 1.6em;
             }
@@ -949,6 +860,7 @@
                 <button class="tab-btn" data-tab="work">💼 работа</button>
                 <button class="tab-btn" data-tab="favorites">⭐ избранное</button>
                 <button class="tab-btn" data-tab="studios">🏢 студии</button>
+                <button class="tab-btn" data-tab="invites">📩 приглашения</button>
                 <button class="tab-btn" data-tab="resume">📄 резюме</button>
             </div>
 
@@ -1053,6 +965,12 @@
                 <div class="cards-grid" id="studiosList"></div>
             </div>
 
+            <!-- ПРИГЛАШЕНИЯ -->
+            <div class="tab-content" id="tabInvites">
+                <h4 style="color:rgba(224,244,255,0.3);font-family:'Segoe UI',sans-serif;font-size:0.8em;margin:0 0 8px 0;">входящие приглашения</h4>
+                <div id="invitesList"></div>
+            </div>
+
             <!-- РЕЗЮМЕ -->
             <div class="tab-content" id="tabResume">
                 <button class="glass-btn btn-cyan" id="createResumeBtn" style="margin-bottom:12px;">➕ создать резюме</button>
@@ -1088,7 +1006,7 @@
                     <div class="profile-field">контакты</div>
                     <div class="profile-value" id="profileContacts">—</div>
                     <div class="profile-field">ваш ID</div>
-                    <div class="profile-value" id="profileUid" style="font-size:0.6em;word-break:break-all;color:rgba(224,244,255,0.2);">—</div>
+                    <div class="profile-value uid" id="profileUid">—</div>
                     <button class="glass-btn btn-chat" id="profileChatBtn" style="margin-top:8px;">💬 написать</button>
                     <div class="profile-field" style="margin-top:12px;">объявления пользователя</div>
                     <div class="cards-grid" id="profileAds"></div>
@@ -1147,6 +1065,7 @@
             comments: {},
             studios: [],
             resumes: [],
+            invites: [],
             lastUpdate: 0
         };
 
@@ -1255,13 +1174,15 @@
                         owner: currentUser,
                         members: [currentUser],
                         createdAt: new Date().toISOString(),
-                        studioId: generateStudioId()
+                        studioId: generateStudioId(),
+                        invites: []
                     });
                 })
                 .then((docRef) => {
                     if (docRef) {
                         notify('✅ студия создана', name);
                         loadStudios();
+                        loadInvites();
                     }
                 })
                 .catch((error) => {
@@ -1273,15 +1194,29 @@
             const targetUserId = prompt('Введите ID пользователя (email или uid):');
             if (!targetUserId) return;
 
-            db.collection('studios').doc(studioId).update({
-                invitations: firebase.firestore.FieldValue.arrayUnion(targetUserId)
-            })
-            .then(() => {
-                notify('✅ приглашение отправлено', 'пользователю ' + targetUserId);
-            })
-            .catch((error) => {
-                notify('❌ ошибка', error.message);
-            });
+            db.collection('users').where('email', '==', targetUserId).get()
+                .then((snapshot) => {
+                    if (snapshot.empty) {
+                        return db.collection('users').doc(targetUserId).get();
+                    }
+                    return snapshot.docs[0].ref.get();
+                })
+                .then((doc) => {
+                    if (!doc || !doc.exists) {
+                        notify('❌ ошибка', 'пользователь не найден');
+                        return;
+                    }
+                    const userId = doc.id;
+                    return db.collection('studios').doc(studioId).update({
+                        invites: firebase.firestore.FieldValue.arrayUnion(userId)
+                    });
+                })
+                .then(() => {
+                    notify('✅ приглашение отправлено', 'пользователю ' + targetUserId);
+                })
+                .catch((error) => {
+                    notify('❌ ошибка', error.message);
+                });
         }
 
         function loadStudios() {
@@ -1313,15 +1248,15 @@
             let html = '';
             cache.studios.forEach(studio => {
                 html += `
-                        <div class="glass-card">
-                            <div class="card-title">${studio.name}</div>
-                            <div class="card-tags">🏷️ ${studio.studioId} · 👥 ${studio.members ? studio.members.length : 1}</div>
-                            <div class="card-actions" style="margin-top:8px;">
-                                <button class="btn-small btn-chat" onclick="inviteToStudio('${studio.id}')">➕ пригласить</button>
-                                <button class="btn-small btn-edit" onclick="viewStudio('${studio.id}')">👁️</button>
+                            <div class="glass-card">
+                                <div class="card-title">${studio.name}</div>
+                                <div class="card-tags">🏷️ ${studio.studioId} · 👥 ${studio.members ? studio.members.length : 1}</div>
+                                <div class="card-actions" style="margin-top:8px;">
+                                    <button class="btn-small btn-invite" onclick="inviteToStudio('${studio.id}')">➕ пригласить</button>
+                                    <button class="btn-small btn-edit" onclick="viewStudio('${studio.id}')">👁️</button>
+                                </div>
                             </div>
-                        </div>
-                    `;
+                        `;
             });
             container.innerHTML = html;
         }
@@ -1338,7 +1273,86 @@
         }
 
         // ============================================================
-        // 5. РЕЗЮМЕ
+        // 5. ПРИГЛАШЕНИЯ
+        // ============================================================
+        function loadInvites() {
+            if (!currentUser) return;
+
+            db.collection('studios')
+                .where('invites', 'array-contains', currentUser)
+                .get()
+                .then((snapshot) => {
+                    cache.invites = [];
+                    snapshot.forEach(doc => {
+                        cache.invites.push({ id: doc.id, ...doc.data() });
+                    });
+                    renderInvites();
+                    const inviteTab = document.querySelector('.tab-btn[data-tab="invites"]');
+                    if (inviteTab) {
+                        const count = cache.invites.length;
+                        inviteTab.innerHTML =
+                            `📩 приглашения${count > 0 ? `<span class="badge">${count}</span>` : ''}`;
+                    }
+                })
+                .catch(() => {});
+        }
+
+        function renderInvites() {
+            const container = document.getElementById('invitesList');
+            if (!container) return;
+
+            if (cache.invites.length === 0) {
+                container.innerHTML =
+                    '<div style="color:rgba(224,244,255,0.15);font-family:Segoe UI,system-ui;text-align:center;padding:20px 0;">нет приглашений</div>';
+                return;
+            }
+
+            let html = '';
+            cache.invites.forEach(invite => {
+                html += `
+                            <div class="glass-card invite-card">
+                                <div class="card-title">🏢 ${invite.name}</div>
+                                <div class="card-tags">ID: ${invite.studioId}</div>
+                                <div class="card-actions" style="margin-top:8px;">
+                                    <button class="btn-small btn-accept" onclick="acceptInvite('${invite.id}')">✅ принять</button>
+                                    <button class="btn-small btn-reject" onclick="rejectInvite('${invite.id}')">❌ отклонить</button>
+                                </div>
+                            </div>
+                        `;
+            });
+            container.innerHTML = html;
+        }
+
+        function acceptInvite(studioId) {
+            db.collection('studios').doc(studioId).update({
+                members: firebase.firestore.FieldValue.arrayUnion(currentUser),
+                invites: firebase.firestore.FieldValue.arrayRemove(currentUser)
+            })
+            .then(() => {
+                notify('✅ вы в студии!', '');
+                loadStudios();
+                loadInvites();
+            })
+            .catch((error) => {
+                notify('❌ ошибка', error.message);
+            });
+        }
+
+        function rejectInvite(studioId) {
+            db.collection('studios').doc(studioId).update({
+                invites: firebase.firestore.FieldValue.arrayRemove(currentUser)
+            })
+            .then(() => {
+                notify('❌ приглашение отклонено', '');
+                loadInvites();
+            })
+            .catch((error) => {
+                notify('❌ ошибка', error.message);
+            });
+        }
+
+        // ============================================================
+        // 6. РЕЗЮМЕ
         // ============================================================
         function createResume() {
             const title = prompt('Заголовок резюме:');
@@ -1390,15 +1404,15 @@
             let html = '';
             cache.resumes.forEach(resume => {
                 html += `
-                        <div class="resume-card">
-                            <div class="resume-title">${resume.title}</div>
-                            <div class="resume-meta">📅 ${timeAgo(resume.createdAt)}</div>
-                            <div class="resume-text">${resume.description}</div>
-                            <div style="margin-top:6px;">
-                                <button class="btn-small btn-delete" onclick="deleteResume('${resume.id}')">🗑️ удалить</button>
+                            <div class="resume-card">
+                                <div class="resume-title">${resume.title}</div>
+                                <div class="resume-meta">📅 ${timeAgo(resume.createdAt)}</div>
+                                <div class="resume-text">${resume.description}</div>
+                                <div style="margin-top:6px;">
+                                    <button class="btn-small btn-delete" onclick="deleteResume('${resume.id}')">🗑️ удалить</button>
+                                </div>
                             </div>
-                        </div>
-                    `;
+                        `;
             });
             container.innerHTML = html;
         }
@@ -1417,7 +1431,7 @@
         }
 
         // ============================================================
-        // 6. ЗАГРУЗКА ДАННЫХ
+        // 7. ЗАГРУЗКА ДАННЫХ
         // ============================================================
         function loadAllData(force = false) {
             if (isLoading) return;
@@ -1496,6 +1510,7 @@
                     renderAll();
                     if (currentUser) {
                         loadStudios();
+                        loadInvites();
                         loadResumes();
                     }
                 })
@@ -1506,7 +1521,7 @@
         }
 
         // ============================================================
-        // 7. АВТОРИЗАЦИЯ
+        // 8. АВТОРИЗАЦИЯ
         // ============================================================
         function showUser() {
             document.getElementById('authBlock').classList.add('hidden');
@@ -1520,6 +1535,7 @@
             document.getElementById('tabSearch').classList.add('active');
             document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
             document.querySelector('.tab-btn[data-tab="search"]').classList.add('active');
+            loadInvites();
             loadAllData(true);
         }
 
@@ -1530,10 +1546,16 @@
             const bio = document.getElementById('regBio').value.trim();
             const msg = document.getElementById('authMessage');
 
-            if (!email || !pass) { msg.innerText = '❌ заполни почту и пароль';
-                msg.className = 'message error'; return; }
-            if (pass.length < 6) { msg.innerText = '❌ пароль минимум 6 символов';
-                msg.className = 'message error'; return; }
+            if (!email || !pass) {
+                msg.innerText = '❌ заполни почту и пароль';
+                msg.className = 'message error';
+                return;
+            }
+            if (pass.length < 6) {
+                msg.innerText = '❌ пароль минимум 6 символов';
+                msg.className = 'message error';
+                return;
+            }
 
             auth.createUserWithEmailAndPassword(email, pass)
                 .then((userCredential) => {
@@ -1562,8 +1584,11 @@
             const pass = document.getElementById('passInput').value.trim();
             const msg = document.getElementById('authMessage');
 
-            if (!email || !pass) { msg.innerText = '❌ заполни все поля';
-                msg.className = 'message error'; return; }
+            if (!email || !pass) {
+                msg.innerText = '❌ заполни все поля';
+                msg.className = 'message error';
+                return;
+            }
 
             auth.signInWithEmailAndPassword(email, pass)
                 .then((userCredential) => {
@@ -1594,7 +1619,7 @@
         }
 
         // ============================================================
-        // 8. ПРОФИЛЬ
+        // 9. ПРОФИЛЬ
         // ============================================================
         function openProfile(userId) {
             const userData = cache.users[userId] || {};
@@ -1620,14 +1645,14 @@
                     const badge = ad.type === 'team' ? '<span class="type-badge badge-team">команда</span>' :
                         '<span class="type-badge badge-work">работа</span>';
                     html += `
-                            <div class="glass-card" style="margin:0;cursor:default;">
-                                ${badge}
-                                <div class="card-title" style="font-size:0.9em;">${ad.title}</div>
-                                <div class="card-tags">🎮 ${ad.role} · ⚙️ ${ad.engine}</div>
-                                <div class="card-desc" style="font-size:0.8em;">${ad.description}</div>
-                                ${ad.image ? `<img src="${ad.image}" class="card-img" />` : ''}
-                            </div>
-                        `;
+                                <div class="glass-card" style="margin:0;cursor:default;">
+                                    ${badge}
+                                    <div class="card-title" style="font-size:0.9em;">${ad.title}</div>
+                                    <div class="card-tags">🎮 ${ad.role} · ⚙️ ${ad.engine}</div>
+                                    <div class="card-desc" style="font-size:0.8em;">${ad.description}</div>
+                                    ${ad.image ? `<img src="${ad.image}" class="card-img" />` : ''}
+                                </div>
+                            `;
                 });
                 container.innerHTML = html;
             }
@@ -1651,7 +1676,7 @@
         }
 
         // ============================================================
-        // 9. РЕДАКТИРОВАНИЕ ПРОФИЛЯ
+        // 10. РЕДАКТИРОВАНИЕ ПРОФИЛЯ
         // ============================================================
         document.getElementById('editProfileBtn').addEventListener('click', function() {
             const userData = cache.users[currentUser] || {};
@@ -1683,7 +1708,7 @@
         });
 
         // ============================================================
-        // 10. ОБЪЯВЛЕНИЯ
+        // 11. ОБЪЯВЛЕНИЯ
         // ============================================================
         document.getElementById('adImage').addEventListener('change', function(e) {
             const file = e.target.files[0];
@@ -1707,8 +1732,11 @@
             const contacts = document.getElementById('adContacts').value.trim();
             const msg = document.getElementById('adMessage');
 
-            if (!title || !description) { msg.innerText = '❌ заполни всё';
-                msg.className = 'message error'; return; }
+            if (!title || !description) {
+                msg.innerText = '❌ заполни всё';
+                msg.className = 'message error';
+                return;
+            }
 
             db.collection('ads').add({
                 userId: currentUser,
@@ -1811,7 +1839,7 @@
         });
 
         // ============================================================
-        // 11. КОММЕНТАРИИ
+        // 12. КОММЕНТАРИИ
         // ============================================================
         function addComment(adId) {
             const input = document.getElementById('commentInput_' + adId);
@@ -1841,25 +1869,25 @@
                 const userData = cache.users[c.userId] || {};
                 const author = userData.email || c.userId;
                 html += `
-                        <div class="comment">
-                            <span class="c-author">${author}</span>
-                            <span class="c-time">${timeAgo(c.createdAt)}</span>
-                            ${c.text}
-                        </div>
-                    `;
+                            <div class="comment">
+                                <span class="c-author">${author}</span>
+                                <span class="c-time">${timeAgo(c.createdAt)}</span>
+                                ${c.text}
+                            </div>
+                        `;
             });
             html += `
-                    <div class="comment-input-row">
-                        <input type="text" id="commentInput_${adId}" placeholder="написать комментарий..." />
-                        <button onclick="addComment('${adId}')">→</button>
+                        <div class="comment-input-row">
+                            <input type="text" id="commentInput_${adId}" placeholder="написать комментарий..." />
+                            <button onclick="addComment('${adId}')">→</button>
+                        </div>
                     </div>
-                </div>
-            `;
+                `;
             return html;
         }
 
         // ============================================================
-        // 12. ИЗБРАННОЕ
+        // 13. ИЗБРАННОЕ
         // ============================================================
         function toggleFav(adId) {
             if (!currentUser) return;
@@ -1887,7 +1915,7 @@
         }
 
         // ============================================================
-        // 13. ЧАТ
+        // 14. ЧАТ
         // ============================================================
         function openChat(partnerId) {
             currentChatPartner = partnerId;
@@ -1928,12 +1956,12 @@
                 const isMe = m.sender === currentUser;
                 const senderName = cache.users[m.sender]?.email || m.sender;
                 html += `
-                        <div class="msg" style="text-align:${isMe ? 'right' : 'left'};background:${isMe ? 'rgba(0,180,255,0.05)' : 'rgba(255,255,255,0.02)'};">
-                            <span class="sender">${isMe ? 'я' : senderName}</span>
-                            <span class="time">${timeAgo(m.time)}</span>
-                            <div>${m.text}</div>
-                        </div>
-                    `;
+                            <div class="msg" style="text-align:${isMe ? 'right' : 'left'};background:${isMe ? 'rgba(0,180,255,0.05)' : 'rgba(255,255,255,0.02)'};">
+                                <span class="sender">${isMe ? 'я' : senderName}</span>
+                                <span class="time">${timeAgo(m.time)}</span>
+                                <div>${m.text}</div>
+                            </div>
+                        `;
             });
             container.innerHTML = html;
             container.scrollTop = container.scrollHeight;
@@ -1970,7 +1998,7 @@
         document.getElementById('chatBackBtn').addEventListener('click', closeChat);
 
         // ============================================================
-        // 14. ФИЛЬТРЫ И ОТРИСОВКА
+        // 15. ФИЛЬТРЫ И ОТРИСОВКА
         // ============================================================
         function applyFilters() {
             renderAll();
@@ -2009,28 +2037,28 @@
                 const authorEmail = userData.email || ad.userId;
 
                 html += `
-                        <div class="glass-card" id="ad-${ad.id}">
-                            ${badge}
-                            <div class="card-title">${ad.title}</div>
-                            <div class="card-tags">🎮 ${ad.role} · ⚙️ ${ad.engine} · ${timeAgo(ad.createdAt)}</div>
-                            <div class="card-desc">${ad.description}</div>
-                            ${ad.image ? `<img src="${ad.image}" class="card-img" />` : ''}
-                            <div class="card-contacts">
-                                📱 ${ad.contacts}
-                                <span class="clickable-author" onclick="openProfile('${ad.userId}')">· ✉️ ${authorEmail}</span>
+                            <div class="glass-card" id="ad-${ad.id}">
+                                ${badge}
+                                <div class="card-title">${ad.title}</div>
+                                <div class="card-tags">🎮 ${ad.role} · ⚙️ ${ad.engine} · ${timeAgo(ad.createdAt)}</div>
+                                <div class="card-desc">${ad.description}</div>
+                                ${ad.image ? `<img src="${ad.image}" class="card-img" />` : ''}
+                                <div class="card-contacts">
+                                    📱 ${ad.contacts}
+                                    <span class="clickable-author" onclick="openProfile('${ad.userId}')">· ✉️ ${authorEmail}</span>
+                                </div>
+                                <div class="card-actions">
+                                    <button class="btn-small btn-fav ${isFav(ad.id)?'active':''}" onclick="toggleFav('${ad.id}')">${isFav(ad.id)?'★':'☆'}</button>
+                                    ${isOwn ? `
+                                        <button class="btn-small btn-edit" onclick="startEditAd('${ad.id}')">✏️</button>
+                                        <button class="btn-small btn-delete" onclick="deleteAd('${ad.id}')">🗑️</button>
+                                    ` : `
+                                        <button class="btn-small btn-chat" onclick="openChat('${ad.userId}')">💬</button>
+                                    `}
+                                </div>
+                                ${commentsHtml}
                             </div>
-                            <div class="card-actions">
-                                <button class="btn-small btn-fav ${isFav(ad.id)?'active':''}" onclick="toggleFav('${ad.id}')">${isFav(ad.id)?'★':'☆'}</button>
-                                ${isOwn ? `
-                                    <button class="btn-small btn-edit" onclick="startEditAd('${ad.id}')">✏️</button>
-                                    <button class="btn-small btn-delete" onclick="deleteAd('${ad.id}')">🗑️</button>
-                                ` : `
-                                    <button class="btn-small btn-chat" onclick="openChat('${ad.userId}')">💬</button>
-                                `}
-                            </div>
-                            ${commentsHtml}
-                        </div>
-                    `;
+                        `;
             });
             container.innerHTML = html;
         }
@@ -2042,7 +2070,7 @@
         }
 
         // ============================================================
-        // 15. ВКЛАДКИ
+        // 16. ВКЛАДКИ
         // ============================================================
         document.getElementById('tabButtons').addEventListener('click', function(e) {
             const btn = e.target.closest('.tab-btn');
@@ -2055,6 +2083,9 @@
 
             if (tabId === 'studios') {
                 loadStudios();
+            }
+            if (tabId === 'invites') {
+                loadInvites();
             }
             if (tabId === 'resume') {
                 loadResumes();
@@ -2075,7 +2106,7 @@
         document.getElementById('filterWorkEngine').addEventListener('change', renderAll);
 
         // ============================================================
-        // 16. АВТООБНОВЛЕНИЕ
+        // 17. АВТООБНОВЛЕНИЕ
         // ============================================================
         setInterval(() => {
             if (currentUser) {
@@ -2084,7 +2115,7 @@
         }, 60000);
 
         // ============================================================
-        // 17. АВТО-ВХОД
+        // 18. АВТО-ВХОД
         // ============================================================
         auth.onAuthStateChanged((user) => {
             if (user) {
