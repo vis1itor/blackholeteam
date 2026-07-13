@@ -34,7 +34,6 @@
             padding: 20px;
         }
 
-        /* ===== КОНТЕЙНЕР ===== */
         .glass-container {
             max-width: 820px;
             width: 100%;
@@ -60,7 +59,6 @@
             pointer-events: none;
         }
 
-        /* ===== ЛОГО ===== */
         .logo {
             font-family: 'Dela Gothic One', cursive;
             font-size: 2.8em;
@@ -89,7 +87,6 @@
             letter-spacing: 2px;
         }
 
-        /* ===== ТАБЫ ===== */
         .tabs {
             display: flex;
             gap: 6px;
@@ -114,6 +111,7 @@
             border: 1px solid rgba(255, 255, 255, 0.06);
             color: rgba(224, 244, 255, 0.4);
             min-width: 60px;
+            position: relative;
         }
 
         .tab-btn:hover {
@@ -126,6 +124,29 @@
             border-color: rgba(0, 180, 255, 0.2);
             color: #00D4FF;
             box-shadow: 0 0 30px rgba(0, 180, 255, 0.05);
+        }
+
+        .tab-btn .badge {
+            position: absolute;
+            top: -6px;
+            right: -6px;
+            background: #ff4444;
+            color: #fff;
+            border-radius: 50%;
+            width: 20px;
+            height: 20px;
+            font-size: 0.6em;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: 'Segoe UI', system-ui, sans-serif;
+            font-weight: 700;
+            animation: pulse 1.5s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.1); }
         }
 
         .tab-content {
@@ -150,7 +171,6 @@
             }
         }
 
-        /* ===== ПОЛЯ ВВОДА ===== */
         .glass-input {
             width: 100%;
             padding: 12px 16px;
@@ -195,7 +215,6 @@
             font-family: 'Segoe UI', system-ui, sans-serif;
         }
 
-        /* ===== КНОПКИ ===== */
         .glass-btn {
             width: 100%;
             padding: 12px;
@@ -241,6 +260,16 @@
 
         .btn-danger:hover {
             background: rgba(255, 50, 50, 0.15);
+        }
+
+        .btn-success {
+            background: rgba(0, 200, 100, 0.08);
+            color: #66dd88;
+            border: 1px solid rgba(0, 200, 100, 0.1);
+        }
+
+        .btn-success:hover {
+            background: rgba(0, 200, 100, 0.15);
         }
 
         .btn-small {
@@ -323,7 +352,6 @@
             color: #E0F4FF;
         }
 
-        /* ===== КАРТОЧКИ (ВЕРТИКАЛЬНЫЕ, 2 В РЯД) ===== */
         .cards-grid {
             display: grid;
             grid-template-columns: 1fr 1fr;
@@ -350,6 +378,11 @@
             transform: translateY(-2px);
             border-color: rgba(0, 180, 255, 0.1);
             box-shadow: 0 8px 30px rgba(0, 0, 0, 0.2);
+        }
+
+        .glass-card.invite-card {
+            border-color: rgba(0, 180, 255, 0.15);
+            background: rgba(0, 180, 255, 0.03);
         }
 
         .card-title {
@@ -401,7 +434,6 @@
             padding: 4px 10px;
         }
 
-        /* ===== ПРОЧЕЕ ===== */
         .divider {
             margin: 16px 0;
             border: none;
@@ -500,6 +532,12 @@
             border: 1px solid rgba(0, 200, 150, 0.05);
         }
 
+        .badge-invite {
+            background: rgba(255, 200, 0, 0.1);
+            color: #ffcc44;
+            border: 1px solid rgba(255, 200, 0, 0.05);
+        }
+
         .profile-avatar {
             width: 60px;
             height: 60px;
@@ -527,6 +565,43 @@
             color: #E0F4FF;
             font-family: 'Segoe UI', system-ui, sans-serif;
             font-size: 0.95em;
+        }
+
+        .profile-uid {
+            background: rgba(0, 180, 255, 0.05);
+            border: 1px solid rgba(0, 180, 255, 0.1);
+            border-radius: 8px;
+            padding: 6px 12px;
+            font-size: 0.7em !important;
+            word-break: break-all;
+            color: rgba(224, 244, 255, 0.6) !important;
+            font-family: 'Courier New', monospace !important;
+            cursor: pointer;
+            transition: 0.2s;
+            user-select: all;
+        }
+
+        .profile-uid:hover {
+            background: rgba(0, 180, 255, 0.1);
+            border-color: rgba(0, 180, 255, 0.2);
+        }
+
+        .copy-uid-btn {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.06);
+            color: rgba(224, 244, 255, 0.3);
+            padding: 2px 10px;
+            border-radius: 6px;
+            font-size: 0.6em;
+            cursor: pointer;
+            transition: 0.2s;
+            font-family: 'Segoe UI', system-ui, sans-serif;
+            margin-left: 6px;
+        }
+
+        .copy-uid-btn:hover {
+            background: rgba(255, 255, 255, 0.06);
+            color: #E0F4FF;
         }
 
         .clickable-author {
@@ -827,6 +902,80 @@
             margin-top: 4px;
         }
 
+        .invite-input-row {
+            display: flex;
+            gap: 8px;
+            margin: 6px 0;
+        }
+
+        .invite-input-row input {
+            flex: 1;
+            padding: 8px 12px;
+            border: none;
+            border-radius: 12px;
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.06);
+            color: #E0F4FF;
+            outline: none;
+            font-family: 'Segoe UI', system-ui, sans-serif;
+            font-size: 0.85em;
+        }
+
+        .invite-input-row button {
+            padding: 8px 16px;
+            border: none;
+            border-radius: 12px;
+            background: linear-gradient(145deg, #00D4FF, #0099CC);
+            color: #05050f;
+            font-family: 'Dela Gothic One', cursive;
+            font-size: 0.7em;
+            cursor: pointer;
+            transition: 0.2s;
+            white-space: nowrap;
+        }
+
+        .invite-input-row button:hover {
+            transform: scale(1.02);
+        }
+
+        .studio-members {
+            color: rgba(224, 244, 255, 0.15);
+            font-family: 'Segoe UI', system-ui, sans-serif;
+            font-size: 0.65em;
+            margin-top: 4px;
+            max-height: 60px;
+            overflow-y: auto;
+        }
+
+        .studio-members .member {
+            display: inline-block;
+            background: rgba(255, 255, 255, 0.03);
+            padding: 0 8px;
+            border-radius: 4px;
+            margin: 1px 2px;
+            color: rgba(224, 244, 255, 0.3);
+        }
+
+        .studio-members .member.you {
+            color: #00D4FF;
+            background: rgba(0, 180, 255, 0.05);
+        }
+
+        .empty-state {
+            color: rgba(224, 244, 255, 0.15);
+            font-family: 'Segoe UI', system-ui, sans-serif;
+            text-align: center;
+            padding: 40px 0;
+            grid-column: 1/-1;
+        }
+
+        .empty-state .icon {
+            font-size: 3em;
+            display: block;
+            margin-bottom: 12px;
+            opacity: 0.3;
+        }
+
         /* ===== АДАПТИВ ===== */
         @media (max-width: 600px) {
             .cards-grid {
@@ -903,8 +1052,11 @@
         <!-- ПОЛЬЗОВАТЕЛЬ -->
         <div id="userBlock" class="hidden">
             <div class="user-greeting">👋 привет, <span id="userName"></span></div>
-            <button class="glass-btn btn-danger" id="logoutBtn" style="margin-top:4px;">выйти</button>
-            <button class="glass-btn btn-ghost" id="editProfileBtn" style="margin-top:4px;">✏️ профиль</button>
+            <div style="display:flex; gap:8px; flex-wrap:wrap; margin-top:4px;">
+                <button class="glass-btn btn-danger" id="logoutBtn" style="flex:1; margin:0;">выйти</button>
+                <button class="glass-btn btn-ghost" id="editProfileBtn" style="flex:1; margin:0;">✏️ профиль</button>
+                <button class="glass-btn btn-ghost" id="showMyProfileBtn" style="flex:1; margin:0;">👤 мой ID</button>
+            </div>
 
             <div id="editProfileForm" class="hidden edit-form">
                 <h4 style="color:#00D4FF;font-family:'Dela Gothic One',cursive;font-weight:400;letter-spacing:1px;">редактировать профиль</h4>
@@ -938,6 +1090,10 @@
                 <button class="tab-btn" data-tab="work">💼 работа</button>
                 <button class="tab-btn" data-tab="favorites">⭐ избранное</button>
                 <button class="tab-btn" data-tab="studios">🏢 студии</button>
+                <button class="tab-btn" data-tab="invites" id="invitesTabBtn">
+                    📩 приглашения
+                    <span class="badge hidden" id="invitesBadge">0</span>
+                </button>
                 <button class="tab-btn" data-tab="resume">📄 резюме</button>
             </div>
 
@@ -1042,6 +1198,12 @@
                 <div class="cards-grid" id="studiosList"></div>
             </div>
 
+            <!-- ПРИГЛАШЕНИЯ (НОВАЯ ВКЛАДКА) -->
+            <div class="tab-content" id="tabInvites">
+                <h3 style="color:rgba(224,244,255,0.4);font-family:'Dela Gothic One',cursive;font-weight:400;font-size:0.9em;letter-spacing:1px;margin-bottom:12px;">📩 входящие приглашения</h3>
+                <div class="cards-grid" id="invitesList"></div>
+            </div>
+
             <!-- РЕЗЮМЕ -->
             <div class="tab-content" id="tabResume">
                 <button class="glass-btn btn-cyan" id="createResumeBtn" style="margin-bottom:12px;">➕ создать резюме</button>
@@ -1076,8 +1238,14 @@
                     <div class="profile-value" id="profileBio">—</div>
                     <div class="profile-field">контакты</div>
                     <div class="profile-value" id="profileContacts">—</div>
-                    <div class="profile-field">ваш ID</div>
-                    <div class="profile-value" id="profileUid" style="font-size:0.6em;word-break:break-all;color:rgba(224,244,255,0.2);">—</div>
+                    <div class="profile-field" style="margin-top:12px;">🔑 уникальный ID (UID)</div>
+                    <div class="profile-value">
+                        <span class="profile-uid" id="profileUid" onclick="copyUid()">—</span>
+                        <button class="copy-uid-btn" onclick="copyUid()">📋 копировать</button>
+                    </div>
+                    <div style="color:rgba(224,244,255,0.15);font-size:0.6em;font-family:'Segoe UI',system-ui;margin-top:4px;">
+                        ⚡ используйте этот ID для приглашений в студии
+                    </div>
                     <button class="glass-btn btn-chat" id="profileChatBtn" style="margin-top:8px;">💬 написать</button>
                     <div class="profile-field" style="margin-top:12px;">объявления пользователя</div>
                     <div class="cards-grid" id="profileAds"></div>
@@ -1127,6 +1295,8 @@
         let editingAdId = null;
         let selectedImageData = null;
         let isLoading = false;
+        let currentProfileUserId = null;
+        let invitesCount = 0;
 
         let cache = {
             ads: [],
@@ -1136,6 +1306,7 @@
             comments: {},
             studios: [],
             resumes: [],
+            invites: [],
             lastUpdate: 0
         };
 
@@ -1184,8 +1355,35 @@
             return cache.favs.includes(adId);
         }
 
+        function copyUid() {
+            const uidEl = document.getElementById('profileUid');
+            const uid = uidEl.textContent;
+            if (uid && uid !== '—') {
+                navigator.clipboard.writeText(uid).then(() => {
+                    notify('📋 скопировано', 'UID скопирован в буфер обмена');
+                }).catch(() => {
+                    const range = document.createRange();
+                    range.selectNode(uidEl);
+                    window.getSelection().removeAllRanges();
+                    window.getSelection().addRange(range);
+                    document.execCommand('copy');
+                    notify('📋 скопировано', 'UID скопирован в буфер обмена');
+                });
+            }
+        }
+
+        function updateInvitesBadge() {
+            const badge = document.getElementById('invitesBadge');
+            if (invitesCount > 0) {
+                badge.classList.remove('hidden');
+                badge.textContent = invitesCount;
+            } else {
+                badge.classList.add('hidden');
+            }
+        }
+
         // ============================================================
-        // 4. СТУДИИ
+        // 4. СТУДИИ И ПРИГЛАШЕНИЯ
         // ============================================================
         function getSimilarity(str1, str2) {
             const longer = str1.length > str2.length ? str1 : str2;
@@ -1244,13 +1442,15 @@
                         owner: currentUser,
                         members: [currentUser],
                         createdAt: new Date().toISOString(),
-                        studioId: generateStudioId()
+                        studioId: generateStudioId(),
+                        invitations: []
                     });
                 })
                 .then((docRef) => {
                     if (docRef) {
                         notify('✅ студия создана', name);
                         loadStudios();
+                        loadInvites();
                     }
                 })
                 .catch((error) => {
@@ -1259,18 +1459,183 @@
         }
 
         function inviteToStudio(studioId) {
-            const targetUserId = prompt('Введите ID пользователя (email или uid):');
+            const targetUserId = prompt('Введите UID пользователя для приглашения:');
             if (!targetUserId) return;
+            if (targetUserId === currentUser) {
+                notify('⚠️', 'нельзя пригласить самого себя');
+                return;
+            }
 
+            db.collection('users').doc(targetUserId).get()
+                .then((doc) => {
+                    if (!doc.exists) {
+                        notify('❌ ошибка', 'пользователь с таким UID не найден');
+                        return null;
+                    }
+                    return db.collection('studios').doc(studioId).get();
+                })
+                .then((doc) => {
+                    if (!doc) return;
+                    const data = doc.data();
+                    if (data.members && data.members.includes(targetUserId)) {
+                        notify('⚠️', 'пользователь уже в студии');
+                        return;
+                    }
+                    if (data.invitations && data.invitations.includes(targetUserId)) {
+                        notify('⚠️', 'пользователь уже приглашён');
+                        return;
+                    }
+                    return db.collection('studios').doc(studioId).update({
+                        invitations: firebase.firestore.FieldValue.arrayUnion(targetUserId)
+                    });
+                })
+                .then(() => {
+                    if (arguments.length > 0 && arguments[0] !== undefined) {
+                        notify('✅ приглашение отправлено', 'пользователю с UID ' + targetUserId);
+                        loadStudios();
+                        loadInvites();
+                    }
+                })
+                .catch((error) => {
+                    notify('❌ ошибка', error.message);
+                });
+        }
+
+        function inviteFromInput(studioId) {
+            const input = document.getElementById('inviteInput_' + studioId);
+            if (!input) return;
+            const uid = input.value.trim();
+            if (!uid) {
+                notify('⚠️', 'введите UID пользователя');
+                return;
+            }
+            input.value = '';
+            inviteToStudioByUid(studioId, uid);
+        }
+
+        function inviteToStudioByUid(studioId, targetUserId) {
+            if (targetUserId === currentUser) {
+                notify('⚠️', 'нельзя пригласить самого себя');
+                return;
+            }
+
+            db.collection('users').doc(targetUserId).get()
+                .then((doc) => {
+                    if (!doc.exists) {
+                        notify('❌ ошибка', 'пользователь с таким UID не найден');
+                        return null;
+                    }
+                    return db.collection('studios').doc(studioId).get();
+                })
+                .then((doc) => {
+                    if (!doc) return;
+                    const data = doc.data();
+                    if (data.members && data.members.includes(targetUserId)) {
+                        notify('⚠️', 'пользователь уже в студии');
+                        return;
+                    }
+                    if (data.invitations && data.invitations.includes(targetUserId)) {
+                        notify('⚠️', 'пользователь уже приглашён');
+                        return;
+                    }
+                    return db.collection('studios').doc(studioId).update({
+                        invitations: firebase.firestore.FieldValue.arrayUnion(targetUserId)
+                    });
+                })
+                .then(() => {
+                    if (arguments.length > 0 && arguments[0] !== undefined) {
+                        notify('✅ приглашение отправлено', 'пользователю с UID ' + targetUserId);
+                        loadStudios();
+                        loadInvites();
+                    }
+                })
+                .catch((error) => {
+                    notify('❌ ошибка', error.message);
+                });
+        }
+
+        function acceptInvite(studioId) {
             db.collection('studios').doc(studioId).update({
-                invitations: firebase.firestore.FieldValue.arrayUnion(targetUserId)
+                members: firebase.firestore.FieldValue.arrayUnion(currentUser),
+                invitations: firebase.firestore.FieldValue.arrayRemove(currentUser)
             })
             .then(() => {
-                notify('✅ приглашение отправлено', 'пользователю ' + targetUserId);
+                notify('✅ вы вступили в студию', '');
+                loadStudios();
+                loadInvites();
             })
             .catch((error) => {
                 notify('❌ ошибка', error.message);
             });
+        }
+
+        function declineInvite(studioId) {
+            if (!confirm('Отклонить приглашение?')) return;
+
+            db.collection('studios').doc(studioId).update({
+                invitations: firebase.firestore.FieldValue.arrayRemove(currentUser)
+            })
+            .then(() => {
+                notify('❌ приглашение отклонено', '');
+                loadStudios();
+                loadInvites();
+            })
+            .catch((error) => {
+                notify('❌ ошибка', error.message);
+            });
+        }
+
+        function loadInvites() {
+            if (!currentUser) return;
+
+            db.collection('studios')
+                .where('invitations', 'array-contains', currentUser)
+                .get()
+                .then((snapshot) => {
+                    cache.invites = [];
+                    snapshot.forEach(doc => {
+                        cache.invites.push({ id: doc.id, ...doc.data() });
+                    });
+                    invitesCount = cache.invites.length;
+                    updateInvitesBadge();
+                    renderInvites();
+                })
+                .catch(() => {});
+        }
+
+        function renderInvites() {
+            const container = document.getElementById('invitesList');
+            if (!container) return;
+
+            if (cache.invites.length === 0) {
+                container.innerHTML = `
+                    <div class="empty-state" style="grid-column:1/-1;">
+                        <span class="icon">📭</span>
+                        у вас нет приглашений в студии
+                    </div>
+                `;
+                return;
+            }
+
+            let html = '';
+            cache.invites.forEach(invite => {
+                const ownerName = cache.users[invite.owner]?.email || invite.owner.slice(0, 8);
+                html += `
+                    <div class="glass-card invite-card">
+                        <span class="type-badge badge-invite">📩 приглашение</span>
+                        <div class="card-title">${invite.name}</div>
+                        <div class="card-tags">🏷️ ${invite.studioId} · от ${ownerName}</div>
+                        <div style="color:rgba(224,244,255,0.2);font-family:'Segoe UI',system-ui;font-size:0.7em;margin:4px 0;">
+                            👥 участников: ${invite.members ? invite.members.length : 1}
+                        </div>
+                        <div class="card-actions" style="margin-top:8px;">
+                            <button class="btn-small btn-success" onclick="acceptInvite('${invite.id}')">✅ принять</button>
+                            <button class="btn-small btn-delete" onclick="declineInvite('${invite.id}')">❌ отклонить</button>
+                        </div>
+                    </div>
+                `;
+            });
+            container.innerHTML = html;
         }
 
         function loadStudios() {
@@ -1294,24 +1659,61 @@
             if (!container) return;
 
             if (cache.studios.length === 0) {
-                container.innerHTML = '<div style="color:rgba(224,244,255,0.15);font-family:Segoe UI,system-ui;text-align:center;padding:20px 0;grid-column:1/-1;">вы не состоите в студиях</div>';
+                container.innerHTML = `
+                    <div class="empty-state" style="grid-column:1/-1;">
+                        <span class="icon">🏢</span>
+                        вы не состоите в студиях
+                        <div style="font-size:0.7em;margin-top:4px;color:rgba(224,244,255,0.1);">
+                            создайте студию или примите приглашение
+                        </div>
+                    </div>
+                `;
                 return;
             }
 
             let html = '';
             cache.studios.forEach(studio => {
+                const isOwner = studio.owner === currentUser;
+                const membersList = studio.members ? studio.members.map(uid => {
+                    const userData = cache.users[uid] || {};
+                    const isYou = uid === currentUser;
+                    return `<span class="member ${isYou?'you':''}">${isYou ? '👤 ' : ''}${userData.email || uid.slice(0,8)}</span>`;
+                }).join(' ') : '';
+
                 html += `
                     <div class="glass-card">
                         <div class="card-title">${studio.name}</div>
                         <div class="card-tags">🏷️ ${studio.studioId} · 👥 ${studio.members ? studio.members.length : 1}</div>
+                        <div class="studio-members">${membersList}</div>
                         <div class="card-actions" style="margin-top:8px;">
-                            <button class="btn-small btn-chat" onclick="inviteToStudio('${studio.id}')">➕ пригласить</button>
+                            ${isOwner ? `<button class="btn-small btn-chat" onclick="inviteToStudio('${studio.id}')">➕ пригласить</button>` : ''}
                             <button class="btn-small btn-edit" onclick="viewStudio('${studio.id}')">👁️</button>
+                            ${isOwner ? `<button class="btn-small btn-delete" onclick="deleteStudio('${studio.id}')">🗑️ удалить</button>` : ''}
                         </div>
+                        ${isOwner ? `
+                            <div class="invite-input-row" style="margin-top:6px;">
+                                <input type="text" id="inviteInput_${studio.id}" placeholder="UID пользователя..." />
+                                <button onclick="inviteFromInput('${studio.id}')">пригласить</button>
+                            </div>
+                        ` : ''}
                     </div>
                 `;
             });
             container.innerHTML = html;
+        }
+
+        function deleteStudio(studioId) {
+            if (!confirm('удалить студию?')) return;
+
+            db.collection('studios').doc(studioId).delete()
+                .then(() => {
+                    notify('🗑️ студия удалена', '');
+                    loadStudios();
+                    loadInvites();
+                })
+                .catch((error) => {
+                    notify('❌ ошибка', error.message);
+                });
         }
 
         function viewStudio(studioId) {
@@ -1321,8 +1723,13 @@
                 return;
             }
 
-            let membersList = studio.members ? studio.members.join('\n') : 'нет участников';
-            alert(`🏢 Студия: ${studio.name}\nID: ${studio.studioId}\nУчастники:\n${membersList}`);
+            let membersList = studio.members ? studio.members.map(uid => {
+                const userData = cache.users[uid] || {};
+                const isYou = uid === currentUser;
+                return (isYou ? '👤 ' : '') + (userData.email || uid.slice(0,8));
+            }).join('\n') : 'нет участников';
+
+            alert(`🏢 Студия: ${studio.name}\nID: ${studio.studioId}\nВладелец: ${studio.owner === currentUser ? 'Вы' : studio.owner}\nУчастники:\n${membersList}`);
         }
 
         // ============================================================
@@ -1370,7 +1777,12 @@
             if (!container) return;
 
             if (cache.resumes.length === 0) {
-                container.innerHTML = '<div style="color:rgba(224,244,255,0.15);font-family:Segoe UI,system-ui;text-align:center;padding:20px 0;">у вас нет резюме</div>';
+                container.innerHTML = `
+                    <div style="color:rgba(224,244,255,0.15);font-family:'Segoe UI',system-ui;text-align:center;padding:40px 0;">
+                        <div style="font-size:3em;margin-bottom:12px;opacity:0.3;">📄</div>
+                        у вас нет резюме
+                    </div>
+                `;
                 return;
             }
 
@@ -1483,6 +1895,7 @@
                     renderAll();
                     if (currentUser) {
                         loadStudios();
+                        loadInvites();
                         loadResumes();
                     }
                 })
@@ -1584,6 +1997,7 @@
         // 8. ПРОФИЛЬ
         // ============================================================
         function openProfile(userId) {
+            currentProfileUserId = userId;
             const userData = cache.users[userId] || {};
             const email = userData.email || userId;
             const ads = cache.ads.filter(ad => ad.userId === userId);
@@ -1635,6 +2049,12 @@
             document.querySelector('.tab-btn[data-tab="search"]').classList.add('active');
             renderAll();
         }
+
+        document.getElementById('showMyProfileBtn').addEventListener('click', function() {
+            if (currentUser) {
+                openProfile(currentUser);
+            }
+        });
 
         // ============================================================
         // 9. РЕДАКТИРОВАНИЕ ПРОФИЛЯ
@@ -1980,8 +2400,12 @@
             });
 
             if (filtered.length === 0) {
-                container.innerHTML =
-                    '<div style="color:rgba(224,244,255,0.1);font-family:Segoe UI,system-ui;text-align:center;padding:20px 0;grid-column:1/-1;">пока ничего нет</div>';
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <span class="icon">${favMode ? '⭐' : '🔍'}</span>
+                        ${favMode ? 'нет избранных объявлений' : 'ничего не найдено'}
+                    </div>
+                `;
                 return;
             }
 
@@ -2037,10 +2461,23 @@
             btn.classList.add('active');
             const tabId = btn.dataset.tab;
             document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
-            document.getElementById('tab' + tabId.charAt(0).toUpperCase() + tabId.slice(1)).classList.add('active');
+            const tabMap = {
+                'search': 'tabSearch',
+                'create': 'tabCreate',
+                'work': 'tabWork',
+                'favorites': 'tabFavorites',
+                'studios': 'tabStudios',
+                'invites': 'tabInvites',
+                'resume': 'tabResume'
+            };
+            const targetTab = document.getElementById(tabMap[tabId]);
+            if (targetTab) targetTab.classList.add('active');
 
             if (tabId === 'studios') {
                 loadStudios();
+            }
+            if (tabId === 'invites') {
+                loadInvites();
             }
             if (tabId === 'resume') {
                 loadResumes();
@@ -2066,8 +2503,9 @@
         setInterval(() => {
             if (currentUser) {
                 loadAllData(false);
+                loadInvites();
             }
-        }, 60000);
+        }, 30000);
 
         // ============================================================
         // 17. АВТО-ВХОД
@@ -2082,6 +2520,7 @@
                     showUser();
                 } else {
                     loadAllData(true);
+                    loadInvites();
                 }
             } else {
                 const savedUser = localStorage.getItem('currentUser');
@@ -2093,4 +2532,4 @@
         });
     </script>
 </body>
-</html> 
+</html>
